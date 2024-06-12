@@ -152,7 +152,7 @@ $(object.path)/win32-wave.o: $(win32.path)/wave.cpp
 # Resource
 resource.app_gnuc := $(object.path)/license.rtf
 resource.app_gnuc += $(win32.path)/app.rc
-resource.app_gnuc += $(win32.path)/resource/fba.ico
+resource.app_gnuc += $(win32.path)/resource/fbneo.ico
 resource.app_gnuc += $(win32.path)/resource/about.bmp
 resource.app_gnuc += $(win32.path)/resource/splash.bmp
 resource.app_gnuc += $(win32.path)/resource/misc.bmp
