@@ -21,3 +21,5 @@ nvram
 *.nvr
 config/*
 fbneo.dat
+/.cache
+/compile_commands.json
