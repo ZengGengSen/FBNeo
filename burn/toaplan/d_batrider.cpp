@@ -13,6 +13,8 @@ static UINT8 drvInput[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 static UINT8 drvRegion = 0;
 static UINT8 drvReset = 0;
 
+static HoldCoin<2> hold_coin;
+
 static UINT8 nIRQPending;
 
 static INT32 nData;
@@ -335,6 +337,8 @@ static INT32 drvScan(INT32 nAction, INT32* pnMin)
 		SCAN_VAR(nTextROMStatus);
 		SCAN_VAR(nCurrentBank);
 		SCAN_VAR(nData);
+
+		hold_coin.scan();
 
 		if (nAction & ACB_WRITE) {
 			INT32 n = nTextROMStatus;
@@ -699,6 +703,8 @@ static INT32 drvDoReset()
 	BurnYM2151Reset();
 	NMK112Reset();
 
+	hold_coin.reset();
+
 	HiscoreReset();
 
 	return 0;
@@ -838,6 +844,9 @@ static INT32 drvFrame()
 	}
 	ToaClearOpposites(&drvInput[0]);
 	ToaClearOpposites(&drvInput[1]);
+
+	hold_coin.check(0, drvInput[2], 1 << 3, 1);
+	hold_coin.check(1, drvInput[2], 1 << 4, 1);
 
 	SekNewFrame();
 
@@ -1231,3 +1240,4 @@ struct BurnDriver BurnDrvBatridta = {
 	drvInit, drvExit, drvFrame, drvDraw, drvScan, &ToaRecalcPalette, 0x800,
 	240, 320, 3, 4
 };
+>>>>>>> mine/master:src/burn/drv/toaplan/d_batrider.cpp
