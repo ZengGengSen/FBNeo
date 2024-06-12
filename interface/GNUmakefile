@@ -1,5 +1,4 @@
 flags += -I$(interface.path)/audio
-flags += -I$(interface.path)/cd
 flags += -I$(interface.path)/input
 flags += -I$(interface.path)/video
 flags += -I$(interface.path)/video/scalers
@@ -19,10 +18,13 @@ ifeq ($(platform),windows)
 	interface.objects += interface-audio-xaudio2
 endif
 
-interface.objects += interface-cd-interface
-
-ifeq ($(platform),windows)
-	interface.objects += interface-cd-img
+ifneq ($(filter $(cores),neogeocd),)
+	interface.objects += interface-cd-interface
+	
+	ifeq ($(platform),windows)
+		interface.objects += interface-cd-img
+	endif
+	flags += -I$(interface.path)/cd
 endif
 
 interface.objects += interface-input-interface

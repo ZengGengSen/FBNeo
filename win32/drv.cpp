@@ -195,6 +195,7 @@ int DrvInit(int nDrvNum, bool bRestore)
 		}
 	}
 
+#if defined(CORE_NEOGEOCD)
 	if ((BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) == HARDWARE_SNK_NEOCD) {
 		if (CDEmuInit()) {
 			FBAPopupAddText(PUF_TEXT_DEFAULT, MAKEINTRESOURCE(IDS_ERR_CDEMU_INI_FAIL));
@@ -208,6 +209,7 @@ int DrvInit(int nDrvNum, bool bRestore)
 
 		NeoCDZRateChange();
 	}
+#endif
 
 	{ // Init input, save audio and blitter init for later. (reduce # of mode changes, nice for emu front-ends)
 		bVidOkay = 1; // don't init video yet
@@ -343,7 +345,9 @@ int DrvExit()
 		memset(nAudNextSound, 0, nAudSegLen << 2);
 	}
 
+#if defined(CORE_NEOGEOCD)
 	CDEmuExit();
+#endif
 
 	BurnExtCartridgeSetupCallback = NULL;
 

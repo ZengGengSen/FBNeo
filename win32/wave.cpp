@@ -11,9 +11,12 @@ static void MakeOfn(TCHAR* pszFilter)
 	_stprintf(pszFilter, FBALoadStringEx(hAppInst, IDS_DISK_FILE_SOUND, true), _T(APP_TITLE));
 	memcpy(pszFilter + _tcslen(pszFilter), _T(" (*.wav)\0*.wav\0\0"), 16 * sizeof(TCHAR));
 
+#if defined(CORE_NEOGEOCD)
 	if (NeoCDInfo_ID()) {
 		_stprintf(szChoice, _T("ngcd_%s.wav"), NeoCDInfo_Text(DRV_NAME));
-	} else {
+	} else
+#endif
+	{
 		_stprintf(szChoice, _T("%s.wav"), BurnDrvGetText(DRV_NAME));
 	}
 

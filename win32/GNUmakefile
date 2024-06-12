@@ -36,6 +36,8 @@ endif
 
 scripts.path := ../scripts
 
+cores := irem neogeo neogeocd
+
 burn.path := ../burn
 include $(burn.path)/GNUmakefile
 
@@ -77,8 +79,6 @@ win32.objects += win32-media
 win32.objects += win32-memcard
 win32.objects += win32-menu
 win32.objects += win32-misc_win32
-win32.objects += win32-neocdlist
-win32.objects += win32-neocdsel
 win32.objects += win32-numdial
 win32.objects += win32-paletteviewer
 win32.objects += win32-placeholder
@@ -97,6 +97,11 @@ win32.objects += win32-stated
 win32.objects += win32-support_paths
 win32.objects += win32-systeminfo
 win32.objects += win32-wave
+
+ifneq ($(filter neogeocd,$(cores)),)
+	win32.objects += win32-neocdlist
+	win32.objects += win32-neocdsel
+endif
 
 win32.objects := $(win32.objects:%=$(object.path)/%.o)
 win32.objects += $(object.path)/win32-resource$(resource.extension)
@@ -169,11 +174,14 @@ resource.flags += -I$(burner.path)
 resource.flags += -I$(object.path)
 resource.flags += -I$(interface.path)/video/win32
 
-$(object.path)/license.rtf: $(win32.path)/../license.txt $(scripts.path)/license2rtf.pl
+$(resource.app_gnuc): $(object.path)
+$(resource): $(object.path)
+
+$(object.path)/license.rtf: $(win32.path)/../license.txt $(scripts.path)/license2rtf.pl | $(object.path)
 	$(info Generating $@ ...)
 	@perl $(scripts.path)/license2rtf.pl $< -o $@
 
-$(object.path)/app_gnuc.rc: $(resource.app_gnuc) $(scripts.path)/fixrc.pl
+$(object.path)/app_gnuc.rc: $(resource.app_gnuc) $(scripts.path)/fixrc.pl | $(object.path)
 	$(info Generating $@ ...)
 	@$(perl) $(scripts.path)/fixrc.pl $(win32.path)/app.rc -o $@
 

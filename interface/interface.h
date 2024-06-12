@@ -60,8 +60,8 @@ std::vector<const InputInOut *> InputGetInterfaces();  // this & include @ top i
 extern bool bInputOkay;
 extern UINT32 nInputSelect;
 
+#if defined(CORE_NEOGEOCD)
 // CD emulation module
-
 struct CDEmuDo {
 	INT32			   (*CDEmuExit)();
 	INT32			   (*CDEmuInit)();
@@ -85,6 +85,7 @@ extern bool bCDEmuOkay;
 extern UINT32 nCDEmuSelect;
 
 extern CDEmuStatusValue CDEmuStatus;
+#endif
 
 // Profiling plugin
 struct ProfileDo {

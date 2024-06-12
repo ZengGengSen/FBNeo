@@ -1,6 +1,8 @@
 // Burner Config for Game file module
 #include "burner.h"
+#if defined(CORE_NEOGEOCD)
 #include "neocdlist.h"
+#endif
 
 const INT32 nConfigMinVersion = 0x020921;
 
@@ -18,9 +20,12 @@ static TCHAR* GameConfigName()
 		}
 	#else
 		// Return the path of the config file for this game
+#if defined(CORE_NEOGEOCD)
 		if (NeoCDInfo_ID()) {
 			_stprintf(szName, _T("config/games/ngcd_%s.ini"), NeoCDInfo_Text(DRV_NAME));
-		} else {
+		} else
+#endif
+		{
 			_stprintf(szName, _T("config/games/%s.ini"), BurnDrvGetText(DRV_NAME));
 		}
 	#endif

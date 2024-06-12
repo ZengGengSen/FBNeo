@@ -36,6 +36,7 @@ DRV		BurnDrvDsoccr94j;
 DRV		BurnDrvDsoccr94k;
 DRV		BurnDrvDsoccr94;
 DRV		BurnDrvDynablst;
+DRV		BurnDrvEightballact;
 DRV		BurnDrvFghtbskt;
 DRV		BurnDrvFirebarr;
 DRV		BurnDrvGallopm72;
@@ -50,6 +51,7 @@ DRV		BurnDrvHharryu;
 DRV		BurnDrvHharry;
 DRV		BurnDrvHharryb;
 DRV		BurnDrvHasamu;
+DRV		BurnDrvHero;
 DRV		BurnDrvHook1v4;
 DRV		BurnDrvHook6h;
 DRV		BurnDrvHookjy;
@@ -72,6 +74,8 @@ DRV		BurnDrvHookx2;
 DRV		BurnDrvHookxr;
 DRV		BurnDrvHookxx;
 DRV		BurnDrvHorizon;
+DRV		BurnDrvHunchbak;
+DRV		BurnDrvHuncholy;
 DRV		BurnDrvImgfightj;
 DRV		BurnDrvImgfightjb;
 DRV		BurnDrvImgfight;
@@ -230,6 +234,7 @@ static struct BurnDriver* pDriver[] = {
 	&BurnDrvDsoccr94k,			// Dream Soccer '94 (Korea, M107 hardware)
 	&BurnDrvDsoccr94,			// Dream Soccer '94 (World, M107 hardware)
 	&BurnDrvDynablst,			// Dynablaster / Bomber Man
+	&BurnDrvEightballact,		// Eight Ball Action (DK conversion) [Parent set for working drivers, NOT WORKING]
 	&BurnDrvFghtbskt,			// Fighting Basketball
 	&BurnDrvFirebarr,			// Fire Barrel (Japan)
 	&BurnDrvGallopm72,			// Gallop - Armed Police Unit (Japan, M72 hardware)
@@ -244,6 +249,7 @@ static struct BurnDriver* pDriver[] = {
 	&BurnDrvHharry,				// Hammerin' Harry (World, M81 hardware)
 	&BurnDrvHharryb,			// Hammerin' Harry (World, M84 hardware bootleg)
 	&BurnDrvHasamu,				// Hasamu (Japan)
+	&BurnDrvHero,				// Hero [Parent set for working drivers, NOT WORKING]
 	&BurnDrvHook1v4,			// Hook (1v4, Hack)
 	&BurnDrvHook6h,				// Hook (6th Emperor, Hack)
 	&BurnDrvHookjy,				// Hook (Elite, Hack)
@@ -266,6 +272,8 @@ static struct BurnDriver* pDriver[] = {
 	&BurnDrvHookxr,				// Hook (Xin Er, Hack)
 	&BurnDrvHookxx,				// Hook (XX, Hack)
 	&BurnDrvHorizon,			// Horizon (Irem)
+	&BurnDrvHunchbak,			// Hunchback (set 1) [Parent set for working drivers, NOT WORKING]
+	&BurnDrvHuncholy,			// Hunchback Olympic [Parent set for working drivers, NOT WORKING]
 	&BurnDrvImgfightj,			// Image Fight (Japan)
 	&BurnDrvImgfightjb,			// Image Fight (Japan, bootleg)
 	&BurnDrvImgfight,			// Image Fight (World)
@@ -428,6 +436,7 @@ static game_sourcefile_entry sourcefile_table[] = {
 	{ "dsoccr94k", "irem/d_m107.cpp"},
 	{ "dsoccr94", "irem/d_m107.cpp"},
 	{ "dynablst", "irem/d_m90.cpp"},
+	{ "8ballact", "burn/d_parent.cpp"},
 	{ "fghtbskt", "irem/d_m63.cpp"},
 	{ "firebarr", "irem/d_m107.cpp"},
 	{ "gallopm72", "irem/d_m72.cpp"},
@@ -442,6 +451,7 @@ static game_sourcefile_entry sourcefile_table[] = {
 	{ "hharry", "irem/d_m72.cpp"},
 	{ "hharryb", "irem/d_m72.cpp"},
 	{ "hasamu", "irem/d_m90.cpp"},
+	{ "hero", "burn/d_parent.cpp"},
 	{ "hook1v4", "irem/d_m92.cpp"},
 	{ "hook6h", "irem/d_m92.cpp"},
 	{ "hookjy", "irem/d_m92.cpp"},
@@ -464,6 +474,8 @@ static game_sourcefile_entry sourcefile_table[] = {
 	{ "hookxr", "irem/d_m92.cpp"},
 	{ "hookxx", "irem/d_m92.cpp"},
 	{ "horizon", "irem/d_m62.cpp"},
+	{ "hunchbak", "burn/d_parent.cpp"},
+	{ "huncholy", "burn/d_parent.cpp"},
 	{ "imgfightj", "irem/d_m72.cpp"},
 	{ "imgfightjb", "irem/d_m72.cpp"},
 	{ "imgfight", "irem/d_m72.cpp"},
