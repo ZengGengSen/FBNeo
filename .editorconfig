@@ -3,5 +3,7 @@ root = true
 
 # rules for all files
 [*]
-indent_style = tab # we use tabs
-indent_size = 4    # of size four
+# we use tabs
+indent_style = tab
+# of size four
+indent_size = 4

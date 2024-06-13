@@ -28,9 +28,12 @@ int StatedAuto(int bSave)
 	static TCHAR szName[MAX_PATH] = _T("");
 	int nRet;
 
+#if defined(CORE_NEOGEOCD)
 	if (NeoCDInfo_ID() && bDrvSaveAll != 0) {
 		_stprintf(szName, _T("%sngcd_%s.fs"), szAppEEPROMPath, NeoCDInfo_Text(DRV_NAME));
-	} else {
+	} else
+#endif
+	{
 		_stprintf(szName, _T("%s%s.fs"), szAppEEPROMPath, BurnDrvGetText(DRV_NAME));
 	}
 
@@ -48,9 +51,12 @@ int StatedAuto(int bSave)
 
 static void CreateStateName(int nSlot)
 {
+#if defined(CORE_NEOGEOCD)
 	if (NeoCDInfo_ID()) {
 		_stprintf(szChoice, _T("./savestates/ngcd_%s slot %02x.fs"), NeoCDInfo_Text(DRV_NAME), nSlot);
-	} else {
+	} else
+#endif
+	{
 		_stprintf(szChoice, _T("./savestates/%s slot %02x.fs"), BurnDrvGetText(DRV_NAME), nSlot);
 	}
 }
@@ -87,9 +93,12 @@ int StatedLoad(int nSlot)
 		CreateStateName(nSlot);
 	} else {
 		if (bDrvOkay) {
+#if defined(CORE_NEOGEOCD)
 			if (NeoCDInfo_ID()) {
 				_stprintf(szChoice, _T("ngcd_%s*.fs"), NeoCDInfo_Text(DRV_NAME));
-			} else {
+			} else
+#endif
+			{
 				_stprintf(szChoice, _T("%s*.fs"), BurnDrvGetText(DRV_NAME));
 			}
 		} else {
@@ -155,9 +164,12 @@ int StatedSave(int nSlot)
 	if (nSlot) {
 		CreateStateName(nSlot);
 	} else {
+#if defined(CORE_NEOGEOCD)
 		if (NeoCDInfo_ID()) {
 			_stprintf(szChoice, _T("ngcd_%s"), NeoCDInfo_Text(DRV_NAME));
-		} else {
+		} else
+#endif
+		{
 			_stprintf(szChoice, _T("%s"), BurnDrvGetText(DRV_NAME));
 		}
 		MakeOfn(szFilter);

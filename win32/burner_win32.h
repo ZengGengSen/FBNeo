@@ -348,6 +348,7 @@ extern bool bIconsOnlyParents;
 extern int nIconsSize, nIconsSizeXY, nIconsYDiff;
 extern bool bGameInfoOpen;
 
+#if defined(CORE_NEOGEOCD)
 // neocdsel.cpp
 extern int NeoCDList_Init();
 extern bool bNeoCDListScanSub;
@@ -355,10 +356,14 @@ extern bool bNeoCDListScanOnlyISO;
 extern TCHAR szNeoCDCoverDir[MAX_PATH];
 extern TCHAR szNeoCDGamesDir[MAX_PATH];
 
+// neocdlist.cpp
+int NeoCDList_CheckISO(TCHAR* pszFile, void (*pfEntryCallBack)(INT32, TCHAR*));
+#endif
+
+// image_win32.cpp
 HBITMAP ImageToBitmap(HWND hwnd, IMAGE* img);
 HBITMAP PNGLoadBitmap(HWND hWnd, FILE* fp, int nWidth, int nHeight, int nPreset);
 HBITMAP LoadBitmap(HWND hWnd, FILE* fp, int nWidth, int nHeight, int nPreset);
-int NeoCDList_CheckISO(TCHAR* pszFile, void (*pfEntryCallBack)(INT32, TCHAR*));
 
 // cona.cpp
 extern int nIniVersion;

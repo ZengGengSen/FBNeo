@@ -1222,6 +1222,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			break;
 		}
 
+#if defined(CORE_NEOGEOCD)
 		case MENU_START_NEOGEO_CD: {
 			BurnerLoadDriver(_T("neocdz"));
 			break;
@@ -1258,6 +1259,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			}
 			break;
 		}
+#endif
 
 		case MENU_STARTNET:
 			if (Init_Network()) {
@@ -3716,7 +3718,9 @@ int ScrnSize()
   	return 0;
 }
 
+#if defined(CORE_NEOGEOCD)
 #include "neocdlist.h" // IsNeoGeoCD()
+#endif
 
 int ScrnTitle()
 {
@@ -3735,10 +3739,12 @@ int ScrnTitle()
 			pszPosition += _stprintf(pszPosition, _T(SEPERATOR_2) _T("%s"), pszName);
 		}
 
+#if defined(CORE_NEOGEOCD)
 		if (IsNeoGeoCD()) {
 			NeoCDInfo_SetTitle();
 			return 0;
 		}
+#endif
 
 	} else {
 		_stprintf(szText, _T(APP_TITLE) _T( " v%.20s") _T(SEPERATOR_1) _T("[%s]"), szAppBurnVer, FBALoadStringEx(hAppInst, IDS_SCRN_NOGAME, true));

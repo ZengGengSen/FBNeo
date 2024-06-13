@@ -1171,9 +1171,12 @@ static TCHAR *GetDrvName() // for both arcade & neocd
 {
 	static TCHAR szName[MAX_PATH] = _T("");
 
+#if defined(CORE_NEOGEOCD)
 	if (NeoCDInfo_ID()) {
 		_stprintf(szName, _T("ngcd_%s"), NeoCDInfo_Text(DRV_NAME));
-	} else {
+	} else
+#endif
+	{
 		_stprintf(szName, _T("%s"), BurnDrvGetText(DRV_NAME));
 	}
 

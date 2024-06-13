@@ -379,8 +379,10 @@ $(output.path):
 compile = \
   $(strip \
     $(if $(filter %.c,$<), \
+	  $(if $(verbose),$(info $([space]) $(compiler.c) $(flags.deps) $(flags) $1 -c $< $(call obj,$@)),) \
       $(compiler.c)   $(flags.deps) $(flags) $1 -c $< $(call obj,$@) \
    ,$(if $(filter %.cpp,$<), \
+      $(if $(verbose),$(info $([space]) $(compiler.cpp) $(flags.deps) $(flags) $1 -c $< $(call obj,$@)),) \
       $(compiler.cpp) $(flags.deps) $(flags) $1 -c $< $(call obj,$@) \
     )) \
   )

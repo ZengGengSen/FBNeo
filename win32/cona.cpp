@@ -199,8 +199,10 @@ int ConfigAppLoad()
 		VAR(bAutoPause);
 		VAR(bSaveInputs);
 
+#if defined(CORE_NEOGEOCD)
 		VAR(nCDEmuSelect);
 		PAT(CDEmuImage);
+#endif
 
 		VAR(nSelDlgWidth);
 		VAR(nSelDlgHeight);
@@ -233,8 +235,9 @@ int ConfigAppLoad()
 		STR(szAppRomPaths[18]);
 		STR(szAppRomPaths[19]);
 
+#if defined(CORE_NEOGEOCD)
 		STR(szNeoCDGamesDir);
-
+#endif
 		STR(szAppPreviewsPath);
 		STR(szAppTitlesPath);
 		STR(szAppCheatsPath);
@@ -243,7 +246,9 @@ int ConfigAppLoad()
 		STR(szAppHDDPath);
 		STR(szAppIpsPath);
 		STR(szAppIconsPath);
+#if defined (CORE_NEOGEOCD)
 		STR(szNeoCDCoverDir);
+#endif
 		STR(szAppBlendPath);
 		STR(szAppSelectPath);
 		STR(szAppVersusPath);
@@ -306,9 +311,10 @@ int ConfigAppLoad()
 		DRV(nBurnDrvSelect[4]);
 		DRV(nBurnDrvSelect[5]);
 
+#if defined(CORE_NEOGEO)
 		VAR(bNeoCDListScanSub);
 		VAR(bNeoCDListScanOnlyISO);
-
+#endif
 		// Default Controls
 		VAR(nPlayerDefaultControls[0]);
 		STR(szPlayerDefaultIni[0]);
@@ -585,12 +591,14 @@ int ConfigAppSave()
 	_ftprintf(h, _T("\n// If non-zero, save the inputs for each game\n"));
 	VAR(bSaveInputs);
 
+#if defined(CORE_NEOGEOCD)
 	_ftprintf(h, _T("\n\n\n"));
 	_ftprintf(h, _T("// --- CD emulation -----------------------------------------------------------\n"));
 	_ftprintf(h, _T("\n // The selected CD emulation module\n"));
 	VAR(nCDEmuSelect);
 	_ftprintf(h, _T("\n // The path to the CD image to use (.cue or .iso)\n"));
 	STR(CDEmuImage);
+#endif
 
 	_ftprintf(h, _T("\n\n\n"));
 	_ftprintf(h, _T("// --- Load Game Dialogs ------------------------------------------------------\n"));
@@ -637,8 +645,10 @@ int ConfigAppSave()
 	STR(szAppRomPaths[18]);
 	STR(szAppRomPaths[19]);
 
+#if defined(CORE_NEOGEOCD)
 	_ftprintf(h, _T("\n// The path to search for Neo Geo CDZ isos\n"));
 	STR(szNeoCDGamesDir);
+#endif
 
 	_ftprintf(h, _T("\n// The paths to search for support files (include trailing backslash)\n"));
 	STR(szAppPreviewsPath);
@@ -649,7 +659,9 @@ int ConfigAppSave()
 	STR(szAppHDDPath);
 	STR(szAppIpsPath);
 	STR(szAppIconsPath);
+#if defined (CORE_NEOGEOCD)
 	STR(szNeoCDCoverDir);
+#endif
 	STR(szAppBlendPath);
 	STR(szAppSelectPath);
 	STR(szAppVersusPath);
@@ -672,9 +684,11 @@ int ConfigAppSave()
 	DRV(nBurnDrvSelect[4]);
 	DRV(nBurnDrvSelect[5]);
 
+#if defined (CORE_NEOGEOCD)
 	_ftprintf(h, _T("\n// Neo Geo CD Load Game Dialog options\n"));
 	VAR(bNeoCDListScanSub);
 	VAR(bNeoCDListScanOnlyISO);
+#endif
 
 	_ftprintf(h, _T("\n\n\n"));
 	_ftprintf(h, _T("// --- miscellaneous ---------------------------------------------------------\n"));

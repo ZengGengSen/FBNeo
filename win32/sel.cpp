@@ -1442,25 +1442,56 @@ static void CreateFilters()
 
 	_TVCreateFiltersC(hRoot			, IDS_SEL_HARDWARE		, hHardware				, nLoadMenuShowX & MASKALL					);
 
+#if defined(CORE_CAPCOM)
 	_TVCreateFiltersD(hHardware		, IDS_SEL_CAPCOM_GRP	, hFilterCapcomGrp			, nLoadMenuShowX & MASKCAPGRP				);
 
+#if defined(CORE_CPS1)
 	_TVCreateFiltersA(hFilterCapcomGrp	, IDS_SEL_CPS1			, hFilterCps1			, nLoadMenuShowX & MASKCPS							);
+#endif
+#if defined(CORE_CPS2)
 	_TVCreateFiltersA(hFilterCapcomGrp	, IDS_SEL_CPS2			, hFilterCps2			, nLoadMenuShowX & MASKCPS2							);
+#endif
+#if defined(CORE_CPS3)
 	_TVCreateFiltersA(hFilterCapcomGrp	, IDS_SEL_CPS3			, hFilterCps3			, nLoadMenuShowX & MASKCPS3							);
+#endif
 	_TVCreateFiltersA(hFilterCapcomGrp	, IDS_SEL_CAPCOM_MISC	, hFilterCapcomMisc		, nLoadMenuShowX & MASKCAPMISC						);
+#endif
 
+#if defined(CORE_CAVE)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_CAVE			, hFilterCave			, nLoadMenuShowX & MASKCAVE							);
+#endif
+#if defined(CORE_DATAEAST)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_DATAEAST		, hFilterDataeast		, nLoadMenuShowX & MASKDATAEAST						);
+#endif
+#if defined(CORE_GALAXIAN)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_GALAXIAN		, hFilterGalaxian		, nLoadMenuShowX & MASKGALAXIAN						);
+#endif
+#if defined(CORE_IREM)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_IREM			, hFilterIrem			, nLoadMenuShowX & MASKIREM							);
+#endif
+#if defined(CORE_KANEKO)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_KANEKO		, hFilterKaneko			, nLoadMenuShowX & MASKKANEKO						);
+#endif
+#if defined(CORE_KONAMI)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_KONAMI		, hFilterKonami			, nLoadMenuShowX & MASKKONAMI						);
+#endif
+#if defined(CORE_MIDWAY)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_MIDWAY		, hFilterMidway			, nLoadMenuShowX & MASKMIDWAY						);
+#endif
+#if defined(CORE_NEOGEO)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_NEOGEO		, hFilterNeogeo			, nLoadMenuShowX & MASKNEOGEO						);
+#endif
+#if defined(CORE_PACMAN)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_PACMAN		, hFilterPacman			, nLoadMenuShowX & MASKPACMAN						);
+#endif
+#if defined(CORE_PSIKYO)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_PGM			, hFilterPgm			, nLoadMenuShowX & MASKPGM							);
+#endif
+#if defined(CORE_PSIKYO)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_PSIKYO		, hFilterPsikyo			, nLoadMenuShowX & MASKPSIKYO						);
+#endif
 
+#if defined(CORE_SEGA)
 	_TVCreateFiltersD(hHardware		, IDS_SEL_SEGA_GRP		, hFilterSegaGrp				, nLoadMenuShowX & MASKSEGAGRP				);
 
 	_TVCreateFiltersA(hFilterSegaGrp	, IDS_SEL_SG1000		, hFilterSg1000			, nLoadMenuShowX & MASKSG1000						);
@@ -1468,21 +1499,50 @@ static void CreateFilters()
 	_TVCreateFiltersA(hFilterSegaGrp	, IDS_SEL_MEGADRIVE		, hFilterMegadrive		, nLoadMenuShowX & MASKMEGADRIVE					);
 	_TVCreateFiltersA(hFilterSegaGrp	, IDS_SEL_GG			, hFilterGg				, nLoadMenuShowX & MASKGG							);
 	_TVCreateFiltersA(hFilterSegaGrp	, IDS_SEL_SEGA			, hFilterSega			, nLoadMenuShowX & MASKSEGA							);
+#endif
 
+#if defined(CORE_SETA)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_SETA			, hFilterSeta			, nLoadMenuShowX & MASKSETA							);
+#endif
+#if defined(CORE_TAITO)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_TAITO			, hFilterTaito			, nLoadMenuShowX & MASKTAITO						);
+#endif
+#if defined(CORE_TECHNOS)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_TECHNOS		, hFilterTechnos		, nLoadMenuShowX & MASKTECHNOS						);
+#endif
+#if defined(CORE_TOAPLAN)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_TOAPLAN		, hFilterToaplan		, nLoadMenuShowX & MASKTOAPLAN						);
+#endif
+#if defined(CORE_PCE)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_PCE			, hFilterPce			, nLoadMenuShowX & MASKPCENGINE						);
+#endif
+#if defined(CORE_COLECO)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_COLECO		, hFilterColeco			, nLoadMenuShowX & MASKCOLECO						);
+#endif
+#if defined(CORE_MSX)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_MSX			, hFilterMsx			, nLoadMenuShowX & MASKMSX							);
+#endif
+#if defined(CORE_SPECTRUM)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_SPECTRUM		, hFilterSpectrum		, nLoadMenuShowX & MASKSPECTRUM						);
+#endif
+#if defined(CORE_NES)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_NES			, hFilterNes			, nLoadMenuShowX & MASKNES							);
+#endif
+#if defined(CORE_FDS)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_FDS			, hFilterFds			, nLoadMenuShowX & MASKFDS							);
+#endif
+#if defined(CORE_NGP)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_NGP			, hFilterNgp			, nLoadMenuShowX & MASKNGP							);
+#endif
+#if defined(CORE_CHANNELF)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_CHANNELF		, hFilterChannelF		, nLoadMenuShowX & MASKCHANNELF						);
+#endif
+#if defined(CORE_MISCPRE90S)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_MISCPRE90S	, hFilterMiscPre90s		, nLoadMenuShowX & MASKMISCPRE90S					);
+#endif
+#if defined(CORE_MISCPOST90S)
 	_TVCreateFiltersA(hHardware		, IDS_SEL_MISCPOST90S	, hFilterMiscPost90s	, nLoadMenuShowX & MASKMISCPOST90S					);
+#endif
 
 	// restore expanded filter nodes
 	for (INT32 i = 0; i < 16; i++)

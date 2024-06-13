@@ -23,16 +23,17 @@ burn.objects += burn-parent
 
 driver.sources := $(burn.path)/burn/d_parent.cpp
 
-#ifneq ($(filter $(cores),irem),)
-include $(burn.path)/irem/GNUmakefile
-#endif
+ifneq ($(filter $(cores),irem),)
+	include $(burn.path)/irem/GNUmakefile
+endif
 
-#ifneq ($(filter $(cores),neogeo),)
-include $(burn.path)/neogeo/GNUmakefile
-#endif
+ifneq ($(filter $(cores),neogeo),)
+	include $(burn.path)/neogeo/GNUmakefile
+endif
 
 include $(burn.path)/component/GNUmakefile
 
+flags += $(foreach c,$(call strupper,$(cores)),-DCORE_$c)
 burn.objects := $(burn.objects:%=$(object.path)/%.o)
 
 $(burn.path)/burn/driverlist.h: $(scripts.path)/gamelist.pl $(driver.sources)

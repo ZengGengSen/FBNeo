@@ -59,8 +59,10 @@ static INT_PTR CALLBACK DefInpProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 			SetDlgItemText(hDlg, IDC_SUPPORTDIR_EDIT5, szAppHiscorePath);
 			SetDlgItemText(hDlg, IDC_SUPPORTDIR_EDIT6, szAppSamplesPath);
 			SetDlgItemText(hDlg, IDC_SUPPORTDIR_EDIT7, szAppIpsPath);
+#if defined(CORE_NEOGEOCD)
 			SetDlgItemText(hDlg, IDC_SUPPORTDIR_EDIT8, szNeoCDGamesDir);
 			SetDlgItemText(hDlg, IDC_SUPPORTDIR_EDIT9, szNeoCDCoverDir);
+#endif
 			SetDlgItemText(hDlg, IDC_SUPPORTDIR_EDIT10, szAppBlendPath);
 			SetDlgItemText(hDlg, IDC_SUPPORTDIR_EDIT11, szAppSelectPath);
 			SetDlgItemText(hDlg, IDC_SUPPORTDIR_EDIT12, szAppVersusPath);
@@ -165,8 +167,10 @@ static INT_PTR CALLBACK DefInpProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 				GetDlgItemText(hDlg, IDC_SUPPORTDIR_EDIT5, szAppHiscorePath,	sizeof(szAppHiscorePath));
 				GetDlgItemText(hDlg, IDC_SUPPORTDIR_EDIT6, szAppSamplesPath,	sizeof(szAppSamplesPath));
 				GetDlgItemText(hDlg, IDC_SUPPORTDIR_EDIT7, szAppIpsPath,		sizeof(szAppIpsPath));
+#if defined(CORE_NEOGEOCD)
 				GetDlgItemText(hDlg, IDC_SUPPORTDIR_EDIT8, szNeoCDGamesDir,		sizeof(szNeoCDGamesDir));
 				GetDlgItemText(hDlg, IDC_SUPPORTDIR_EDIT9, szNeoCDCoverDir,		sizeof(szNeoCDCoverDir));
+#endif
 				GetDlgItemText(hDlg, IDC_SUPPORTDIR_EDIT10, szAppBlendPath,		sizeof(szAppBlendPath));
 				GetDlgItemText(hDlg, IDC_SUPPORTDIR_EDIT11, szAppSelectPath,	sizeof(szAppSelectPath));
 				GetDlgItemText(hDlg, IDC_SUPPORTDIR_EDIT12, szAppVersusPath,	sizeof(szAppVersusPath));
