@@ -15,6 +15,7 @@ AUTOGEN_DATS = 0
 HAVE_NEON = 0
 USE_EXPERIMENTAL_FLAGS = 0
 USE_CYCLONE = 0
+USE_C68K = 0
 HAVE_UWP = 0
 SUPPORT_LARGE_FILES = 1
 # Use a temporary file to hold the list of objects, as it can exceed windows shell command limits
