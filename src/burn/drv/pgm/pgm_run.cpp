@@ -315,33 +315,74 @@ static void __fastcall PgmVideoControllerWriteWord(UINT32 sekAddress, UINT16 wor
 {
 	switch (sekAddress & 0x0f000)
 	{
-		case 0x0000: PGMSprBuf[(sekAddress >> 1) & 0x7ff] = wordValue; bprintf(0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue); break; // Sprite buffer is not writeable by the 68K, but the BIOS tries anyway
+		case 0x0000:
+		    PGMSprBuf[(sekAddress >> 1) & 0x7ff] = wordValue;
+#ifdef FBNEO_DEBUG
+			bprintf(0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue);
+#endif
+			break; // Sprite buffer is not writeable by the 68K, but the BIOS tries anyway
 		case 0x1000: PGMZoomRAM[(sekAddress >> 1) & 0x1f] = wordValue; break; // size is guessed
 		case 0x2000: pgm_bg_scrolly = wordValue; break;
 		case 0x3000: pgm_bg_scrollx = wordValue; break;
 		case 0x4000: /*bprintf (0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue);*/ pgm_unk_video_flags = wordValue; break; // 0610 is always written, but changing this seems to have no effect
 		case 0x5000: pgm_fg_scrolly = wordValue; break;
 		case 0x6000: pgm_fg_scrollx = wordValue; break;
-		case 0x7000: bprintf (0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue); break; // ?
-		case 0x8000: bprintf (0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue); break; // ?
-		case 0x9000: bprintf (0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue); break; // ?
-		case 0xa000: bprintf (0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue); break; // ?
-		case 0xb000: bprintf (0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue); break; // ?
-		case 0xc000: bprintf (0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue); break; // ?
-		case 0xd000: bprintf (0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue); break; // ?
+		case 0x7000:
+#ifdef FBNEO_DEBUG
+		    bprintf (0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue);
+#endif
+			break; // ?
+		case 0x8000:
+#ifdef FBNEO_DEBUG
+		    bprintf (0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue);
+#endif
+			break; // ?
+		case 0x9000:
+#ifdef FBNEO_DEBUG
+		    bprintf (0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue);
+#endif
+			break; // ?
+		case 0xa000:
+#ifdef FBNEO_DEBUG
+		    bprintf (0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue);
+#endif
+			break; // ?
+		case 0xb000:
+#ifdef FBNEO_DEBUG
+		    bprintf (0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue);
+#endif
+			break; // ?
+		case 0xc000:
+#ifdef FBNEO_DEBUG
+		    bprintf (0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue);
+#endif
+			break; // ?
+		case 0xd000:
+#ifdef FBNEO_DEBUG
+		    bprintf (0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue);
+#endif
+			break; // ?
 		case 0xe000: pgm_video_control = wordValue; break;
-		case 0xf000: bprintf (0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue); break; // ?
+		case 0xf000:
+#ifdef FBNEO_DEBUG
+		    bprintf (0, _T("VideoController write word: %5.5x, %4.4x\n"), sekAddress, wordValue);
+#endif
+			break; // ?
 	}
 }
 
 static void __fastcall PgmVideoControllerWriteByte(UINT32 sekAddress, UINT8 byteValue)
 {
+#ifdef FBNEO_DEBUG
 	bprintf (0, _T("VideoController Write Byte: %5.5x, %2.2x PC(%5.5x)\n"), sekAddress, byteValue, SekGetPC(-1));
+#endif
 }
 
 static UINT16 __fastcall PgmVideoControllerReadWord(UINT32 sekAddress)
 {
+#ifdef FBNEO_DEBUG
 	bprintf (0, _T("VideoController Read Word: %5.5x, PC(%5.5x)\n"), sekAddress, SekGetPC(-1));
+#endif
 
 	// ddp2 seems to read from the sprite buffer?
 	switch (sekAddress & 0x0f000)
@@ -363,7 +404,7 @@ static UINT16 __fastcall PgmVideoControllerReadWord(UINT32 sekAddress)
 		case 0xe000: return pgm_video_control;
 		case 0xf000: return 0;
 	}
-	
+
 	return 0;
 }
 
@@ -375,7 +416,9 @@ static UINT8 __fastcall PgmVideoControllerReadByte(UINT32 sekAddress)
 			return PGMSprBuf[(sekAddress >> 1) & 0x7ff] >> ((~sekAddress & 1) * 8);
 	}
 
+#ifdef FBNEO_DEBUG
 	bprintf (0, _T("VideoController Read Byte: %5.5x, PC(%5.5x)\n"), sekAddress, SekGetPC(-1));
+#endif
 
 	return 0;
 }
@@ -410,7 +453,7 @@ static UINT16 __fastcall PgmReadWord(UINT32 sekAddress)
 		case 0xC00004:
 			pgmSynchroniseZ80(0);
 			return ics2115_soundlatch_r(1);
-			
+
 		case 0xC00006:	// ketsui wants this
 			return v3021Read();
 
@@ -456,7 +499,7 @@ static void __fastcall PgmWriteWord(UINT32 sekAddress, UINT16 wordValue)
 
 	UINT32 u32Addr = sekAddress;
 	if (!OldCodeMode) u32Addr &= ~0xe7ff0;
-	
+
 	switch (u32Addr)
 	{
 		case 0xC00002:
@@ -517,7 +560,10 @@ static UINT8 __fastcall PgmZ80ReadByte(UINT32 sekAddress)
 	switch (sekAddress)
 	{
 		default:
+#ifdef FBNEO_DEBUG
 			bprintf(PRINT_NORMAL, _T("Attempt to read byte value of location %x\n"), sekAddress);
+#endif
+            break;
 	}
 
 	return 0;
@@ -539,7 +585,10 @@ static void __fastcall PgmZ80WriteByte(UINT32 sekAddress, UINT8 byteValue)
 	switch (sekAddress)
 	{
 		default:
+#ifdef FBNEO_DEBUG
 			bprintf(PRINT_NORMAL, _T("Attempt to write byte value (%2.2x) of location %x\n"), byteValue, sekAddress);
+#endif
+            break;
 	}
 }
 
@@ -622,7 +671,7 @@ static void __fastcall PgmZ80PortWrite(UINT16 port, UINT8 data)
 
 		case 0x82:
 			ics2115_soundlatch_w(0, data);
-			break;	
+			break;
 
 		case 0x84:
 			ics2115_soundlatch_w(1, data);
@@ -773,7 +822,7 @@ static void expand_tile_gfx()
 
 static void expand_colourdata()
 {
-	// allocate 
+	// allocate
 	{
 		INT32 needed = (nPGMSPRColROMLen / 2) * 3;
 		nPGMSPRColMaskLen = 1;
@@ -797,14 +846,14 @@ static void expand_colourdata()
 	{
 		char* pRomName;
 		struct BurnRomInfo ri;
-	
+
 		UINT8 *PGMSPRColROMLoad = tmp;
 		INT32 prev_len = 0;
-	
+
 		for (INT32 i = 0; !BurnDrvGetRomName(&pRomName, i, 0); i++) {
-	
+
 			BurnDrvGetRomInfo(&ri, i);
-	
+
 			if ((ri.nType & BRF_GRA) && (ri.nType & 0x0f) == 3)
 			{
 				// Fix for kovsh & hacks a0613 rom overlap
@@ -916,7 +965,7 @@ INT32 pgmInit()
 			SekMapMemory((UINT8 *)PGMTxtRAM,	0x906000 | i, 0x906fff | i, MAP_RAM); // mirror
 			SekMapMemory((UINT8 *)PGMRowRAM,	0x907000 | i, 0x907fff | i, MAP_RAM);
 		}
-		
+
 		if (OldCodeMode) {
 			SekMapMemory((UINT8 *)PGMPalRAM,	0xa00000, 0xa013ff, MAP_ROM); // palette
 			SekMapMemory((UINT8 *)PGMVidReg,	0xb00000, 0xb0ffff, MAP_RAM); // should be mirrored?
@@ -942,7 +991,7 @@ INT32 pgmInit()
 
 		SekSetWriteByteHandler(1,		PgmPaletteWriteByte);
 		SekSetWriteWordHandler(1,		PgmPaletteWriteWord);
-		
+
 		if (OldCodeMode) {
 			SekSetReadWordHandler(2,	PgmZ80ReadWord);
 			SekSetReadByteHandler(2,	PgmZ80ReadByte);
@@ -979,7 +1028,7 @@ INT32 pgmInit()
 	BurnTimerAttachZet(Z80_FREQ);
 
 	pBurnDrvPalette = (UINT32*)PGMPalRAM;
-    
+
     if (strncmp(BurnDrvGetTextA(DRV_NAME), "pgm3in1", 7) == 0) {//load pgm3in1 mask rom and sound rom before pgm3in1's decrypt
         UINT8 *maskROM = (UINT8 *)malloc(0x200000);
         BurnLoadRom(maskROM,9,1);
@@ -1058,18 +1107,18 @@ static void pgm_sprite_buffer()
 	if (pgm_video_control & 0x0001) // verified
 	{
 		UINT16 *ram16 = (UINT16*)PGM68KRAM;
-		
-		UINT16 mask[2][5] = { 
+
+		UINT16 mask[2][5] = {
 			{ 0xffff, 0xfbff, 0x7fff, 0xffff, 0xffff }, // The sprite buffer hardware masks these bits!
 			{ 0xffff, 0xffff, 0xffff, 0xffff, 0xffff }	// Some hacks rely on poor emulation
 		};
-		
+
 		for (INT32 i = 0; i < 0xa00/2; i+= 10/2)
 		{
 			for (INT32 j = 0; j < 10 / 2; j++)
 			{
 				PGMSprBuf[(i / (10 / 2)) * (16 / 2) + j] = ram16[i + j] & mask[nPGMSpriteBufferHack][j];
-			} 
+			}
 
 			if ((ram16[i+4] & 0x7fff) == 0) break; // verified on hardware
 		}
@@ -1168,7 +1217,7 @@ INT32 pgmFrame()
 				SekSetIRQLine(6, CPU_IRQSTATUS_AUTO); // vblank - cart-controlled!
 				pgm_sprite_buffer();
 			}
-			if (i == 218 && !nPGMDisableIRQ4) SekSetIRQLine(4, CPU_IRQSTATUS_AUTO); // verified on Dragon World II cart - Cart-controlled! 
+			if (i == 218 && !nPGMDisableIRQ4) SekSetIRQLine(4, CPU_IRQSTATUS_AUTO); // verified on Dragon World II cart - Cart-controlled!
 
 			CPU_RUN(0, Sek);
 		//	CPU_IDLE_SYNCINT(1, Zet); // sync'd on reads and writes and at the end of the frame
@@ -1197,7 +1246,7 @@ INT32 pgmFrame()
 
 	if (OldCodeMode)
 		memcpy(PGMSprBuf, PGM68KRAM /* Sprite RAM 0-bff */, 0xa00); // buffer sprites
-	
+
 	return 0;
 }
 
@@ -1211,7 +1260,7 @@ INT32 pgmScan(INT32 nAction,INT32 *pnMin)
 
 	nPgmPalRecalc = 1;
 
-	if (nAction & ACB_MEMORY_ROM) {	
+	if (nAction & ACB_MEMORY_ROM) {
 		if (BurnDrvGetHardwareCode() & HARDWARE_IGS_JAMMAPCB) {
 			ba.Data		= PGM68KROM;
 			ba.nLen		= nPGM68KROMLen;
@@ -1233,7 +1282,7 @@ INT32 pgmScan(INT32 nAction,INT32 *pnMin)
 		}
 	}
 
-	if (nAction & ACB_MEMORY_RAM) {	
+	if (nAction & ACB_MEMORY_RAM) {
 		ba.Data			= PGMBgRAM;
 		ba.nLen			= 0x004000;
 		ba.nAddress		= 0x900000;
@@ -1277,13 +1326,13 @@ INT32 pgmScan(INT32 nAction,INT32 *pnMin)
 			ba.szName	= "Video Regs";
 			BurnAcb(&ba);
 		}
-		
+
 		ba.Data			= PGMZoomRAM;
 		ba.nLen			= 0x000040;
 		ba.nAddress		= 0xB01000;
 		ba.szName		= "Zoom Regs";
 		BurnAcb(&ba);
-		
+
 		ba.Data			= RamZ80;
 		ba.nLen			= 0x010000;
 		ba.nAddress		= 0xC10000;
@@ -1300,7 +1349,7 @@ INT32 pgmScan(INT32 nAction,INT32 *pnMin)
 	}
 
 	if (nAction & ACB_DRIVER_DATA) {
-	
+
 		SekScan(nAction);
 		ZetScan(nAction);
 
