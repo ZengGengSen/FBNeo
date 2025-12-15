@@ -64,7 +64,7 @@ ifeq ($(SUBSET),)
 	INCLUDED_MAKEFILE = Makefile.all
 else
 	TARGET_NAME := fbneo_$(SUBSET)
-	INCLUDED_MAKEFILE = Makefile.$(SUBSET)
+	INCLUDED_MAKEFILE = $(SUBSET).mk
 endif
 
 # Unix
@@ -335,8 +335,8 @@ else ifeq ($(platform), funkey)
 # Platform affix = classic_<ISA>_<µARCH>
 # Help at https://modmyclassic.com/comp
 
-# (armv7 a7, hard point, neon based) ### 
-# NESC, SNESC, C64 mini 
+# (armv7 a7, hard point, neon based) ###
+# NESC, SNESC, C64 mini
 else ifeq ($(platform), classic_armv7_a7)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
@@ -547,7 +547,7 @@ endif
 
 ifeq ($(FASTMATH), 1)
 	ifeq (,$(findstring msvc,$(platform)))
-		# 2019-06-26 : 
+		# 2019-06-26 :
 		# we got some evidence that -ffast-math is actually not safe for fbneo
 		# adding -frounding-math to fix arithmetic in neogeo_run.cpp, it might fix other stuff
 		# clang might need a minimum version for -frounding-math support
