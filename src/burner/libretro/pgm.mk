@@ -1,9 +1,14 @@
 # Drivers, cpus and devices for neogeo subset
-SOURCES_C += $(M68K_CPU_DIR)/m68kcpu.c \
-	$(M68K_CPU_DIR)/m68kops.c
+ifeq ($(USE_C68K),1)
+	FBNEO_DEFINES += -DUSE_C68K
+	SOURCES_CXX += $(FBNEO_CPU_DIR)/c68k_intf.cpp
+else
+	SOURCES_C += $(M68K_CPU_DIR)/m68kcpu.c \
+		$(M68K_CPU_DIR)/m68kops.c
+	SOURCES_CXX += $(FBNEO_CPU_DIR)/m68000_intf.cpp
+endif
 
 SOURCES_CXX += $(FBNEO_CPU_DIR)/arm7_intf.cpp \
-	$(FBNEO_CPU_DIR)/m68000_intf.cpp \
 	$(FBNEO_CPU_DIR)/z80_intf.cpp \
 	$(ARM7_CPU_DIR)/arm7.cpp \
 	$(Z80_CPU_DIR)/z80.cpp \

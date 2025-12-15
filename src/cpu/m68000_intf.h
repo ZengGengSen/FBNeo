@@ -9,11 +9,17 @@
  #define EMU_A68K								// Use A68K Assembler 68000 emulator
 #endif
 
-#define EMU_M68K								// Use Musashi 68000 emulator
+#if defined USE_C68K
+  #define EMU_C68K                              // Use C68K 68000 emulator
+#else
+  #define EMU_M68K								// Use Musashi 68000 emulator
+#endif
 
 #define SEK_MAX	(5)								// Maximum number of CPUs supported
 
-#if defined EMU_M68K
+#if defined USE_C68K
+  #include "c68k/c68k.h"
+#elif defined EMU_M68K
  #include "m68k/m68k.h"
 #endif
 
@@ -58,7 +64,11 @@
  void __fastcall AsekChangePc(UINT32 pc);
 #endif
 
-#ifdef EMU_M68K
+#ifdef EMU_C68K
+ extern "C" c68k_struc * SekC68KCurrentContext;
+ extern "C" c68k_struc * SekC68KContext[SEK_MAX];
+ #define m68k_ICount	(SekC68KCurrentContext->ICount)
+#elif defined EMU_M68K
  extern "C" INT32 nSekM68KContextSize[SEK_MAX];
  extern "C" INT8* SekM68KContext[SEK_MAX];
  extern "C" INT32 m68k_ICount;
@@ -192,10 +202,10 @@ inline static INT32 SekSegmentCycles()
 	if (nSekActive == -1) bprintf(PRINT_ERROR, (TCHAR*)_T("SekSegmentCycles called when no CPU open\n"));
 #endif
 
-#ifdef EMU_M68K
-	return nSekCyclesDone + nSekCyclesToDo - m68k_ICount;
+#ifdef EMU_A68K
+    return nSekCyclesDone + nSekCyclesToDo;
 #else
-	return nSekCyclesDone + nSekCyclesToDo;
+    return nSekCyclesDone + nSekCyclesToDo - m68k_ICount;
 #endif
 }
 
@@ -213,10 +223,10 @@ inline static INT32 SekTotalCycles()
 	if (nSekActive == -1) bprintf(PRINT_ERROR, (TCHAR*)_T("SekTotalCycles called when no CPU open\n"));
 #endif
 
-#ifdef EMU_M68K
-	return nSekCyclesTotal + nSekCyclesToDo - m68k_ICount;
+#ifdef EMU_A68K
+    return nSekCyclesTotal + nSekCyclesToDo;
 #else
-	return nSekCyclesTotal + nSekCyclesToDo;
+	return nSekCyclesTotal + nSekCyclesToDo - m68k_ICount;
 #endif
 }
 
