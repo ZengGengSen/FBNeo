@@ -747,7 +747,9 @@ static void IGS022_do_dma(UINT16 src, UINT16 dst, UINT16 size, UINT16 mode)
 {
 	UINT16 param = mode >> 8;
 
+#ifdef FBNEO_DEBUG
 	bprintf (0, _T("src: %4.4x, dst: %4.4x, size: %4.4x, mode: %4.4x\n"), src,dst,size,mode);
+#endif
 
 	mode &= 0x7;  // what are the other bits?
 
@@ -857,7 +859,7 @@ static void IGS022_handle_command()
 	if (cmd == 0x6d)    // Store values to asic ram
 	{
         UINT32 game_id = ((kb_game_id >> 16) & 0xff) & 0xf; // killbld == 1, drgw3 == 6
-        
+
 		UINT32 p1 = (BURN_ENDIAN_SWAP_INT16(sharedprotram[0x298/2]) << (game_id == 1 ? 16 : 0)) | BURN_ENDIAN_SWAP_INT16(sharedprotram[0x29a/2]);
 		UINT32 p2 = (BURN_ENDIAN_SWAP_INT16(sharedprotram[0x29c/2]) << (game_id == 1 ? 16 : 0)) | BURN_ENDIAN_SWAP_INT16(sharedprotram[0x29e/2]);
 
@@ -893,7 +895,7 @@ static void IGS022_handle_command()
             {
                 p2 = p1;
             }
-            
+
             INT32 reg = (p2 >> 16) & 0xFF;
 
 			sharedprotram[0x29c/2] = BURN_ENDIAN_SWAP_INT16((kb_regs[reg] >> 16) & 0xffff);
@@ -1113,7 +1115,9 @@ static void killbld_protection_calculate_hilo()
 
 static void __fastcall killbld_igs025_prot_write(UINT32 address, UINT16 data)
 {
+#ifdef FBNEO_DEBUG
 	bprintf (0, _T("PRTW: %5.5x %4.4x\n"), address, data);
+#endif
 
 	if ((address & 3) == 0) {
 		kb_cmd = data;
@@ -1168,7 +1172,9 @@ static void __fastcall killbld_igs025_prot_write(UINT32 address, UINT16 data)
 #if 0
 static void __fastcall olds_igs025_prot_write(UINT32 address, UINT16 data)
 {
+#ifdef FBNEO_DEBUG
 	bprintf (0, _T("PRTW: %5.5x %4.4x\n"), address, data);
+#endif
 
 	if (address == 0xdcb400) {
 		kb_cmd = data;
@@ -1213,7 +1219,9 @@ static void __fastcall olds_igs025_prot_write(UINT32 address, UINT16 data)
 
 static void __fastcall drgw2_igs025_prot_write(UINT32 address, UINT16 data)
 {
+#ifdef FBNEO_DEBUG
 	bprintf (0, _T("PRTW: %5.5x %4.4x\n"), address, data);
+#endif
 
 	if (address == 0xd80000) {
 		kb_cmd = data;
@@ -1238,44 +1246,46 @@ static void __fastcall drgw2_igs025_prot_write(UINT32 address, UINT16 data)
 
 static UINT16 __fastcall igs025_prot_read(UINT32 address)
 {
-	bprintf (0, _T("PRTR: %5.5x\n"), address);
+#ifdef FBNEO_DEBUG
+    bprintf (0, _T("PRTR: %5.5x\n"), address);
+#endif
 
     if (address & 3) {
         switch (kb_cmd)
         {
             case 0x00:
                 return BITSWAP08((kb_swap + 1) & 0x7f, 0, 1, 2, 3, 4, 5, 6, 7); // drgw3
-                
+
             case 0x01:
                 return kb_reg & 0x7f;
-                
+
             case 0x02:
                 return olds_bs | 0x80;
-                
+
             case 0x03:
                 return kb_cmd3;
-                
+
             case 0x05:
             {
                 switch (kb_ptr)
                 {
                     case 1:
                         return 0x3f00 | ((kb_game_id >> 0) & 0xff);
-                        
+
                     case 2:
                         return 0x3f00 | ((kb_game_id >> 8) & 0xff);
-                        
+
                     case 3:
                         return 0x3f00 | ((kb_game_id >> 16) & 0xff);
-                        
+
                     case 4:
                         return 0x3f00 | ((kb_game_id >> 24) & 0xff);
-                        
+
                     default: // >= 5
                         return 0x3f00 | BITSWAP08(kb_prot_hold, 5, 2, 9, 7, 10, 13, 12, 15);
                 }
             }
-                
+
             case 0x40:
                 killbld_protection_calculate_hilo();
                 return 0;
@@ -1308,7 +1318,7 @@ static void drgw2_reset()
 	if (strcmp(BurnDrvGetTextA(DRV_NAME), "dw2v100x") == 0) kb_region = 6;
 	if (strcmp(BurnDrvGetTextA(DRV_NAME), "drgw2c")   == 0) kb_region = 5;
 	if (strcmp(BurnDrvGetTextA(DRV_NAME), "drgw2j")   == 0) kb_region = 1;
-	
+
 	common_reset();
 }
 
@@ -1842,4 +1852,3 @@ void install_protection_asic25_asic28_olds()
 
 	SekClose();
 }
-
