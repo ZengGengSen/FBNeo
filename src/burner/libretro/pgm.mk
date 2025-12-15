@@ -8,13 +8,19 @@ else
 	SOURCES_CXX += $(FBNEO_CPU_DIR)/m68000_intf.cpp
 endif
 
+ifeq ($(USE_CZ80),1)
+	FBNEO_DEFINES += -DUSE_CZ80
+	SOURCES_CXX += $(FBNEO_CPU_DIR)/cz80_intf.cpp
+else
+	SOURCES_CXX += $(FBNEO_CPU_DIR)/z80_intf.cpp \
+	    $(Z80_CPU_DIR)/z80.cpp \
+		$(Z80_CPU_DIR)/z80ctc.cpp \
+		$(Z80_CPU_DIR)/z80daisy.cpp \
+		$(Z80_CPU_DIR)/z80pio.cpp
+endif
+
 SOURCES_CXX += $(FBNEO_CPU_DIR)/arm7_intf.cpp \
-	$(FBNEO_CPU_DIR)/z80_intf.cpp \
 	$(ARM7_CPU_DIR)/arm7.cpp \
-	$(Z80_CPU_DIR)/z80.cpp \
-	$(Z80_CPU_DIR)/z80ctc.cpp \
-	$(Z80_CPU_DIR)/z80daisy.cpp \
-	$(Z80_CPU_DIR)/z80pio.cpp \
 	$(FBNEO_BURN_DIR)/burn_bitmap.cpp \
 	$(FBNEO_BURN_DIR)/tilemap_generic.cpp \
 	$(FBNEO_BURN_DIR)/tiles_generic.cpp \
