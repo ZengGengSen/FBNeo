@@ -1,17 +1,29 @@
 # Drivers, cpus and devices for neogeo subset
+ifeq ($(USE_C68K),1)
+	FBNEO_DEFINES += -DUSE_C68K
+	SOURCES_CXX += $(FBNEO_CPU_DIR)/c68k_intf.cpp
+else
+	SOURCES_C += $(M68K_CPU_DIR)/m68kcpu.c \
+		$(M68K_CPU_DIR)/m68kops.c
+	SOURCES_CXX += $(FBNEO_CPU_DIR)/m68000_intf.cpp
+endif
+
+ifeq ($(USE_CZ80),1)
+	FBNEO_DEFINES += -DUSE_CZ80
+	SOURCES_CXX += $(FBNEO_CPU_DIR)/cz80_intf.cpp
+else
+	SOURCES_CXX += $(FBNEO_CPU_DIR)/z80_intf.cpp \
+	    $(Z80_CPU_DIR)/z80.cpp \
+		$(Z80_CPU_DIR)/z80ctc.cpp \
+		$(Z80_CPU_DIR)/z80daisy.cpp \
+		$(Z80_CPU_DIR)/z80pio.cpp
+endif
+
 SOURCES_C += $(FBNEO_BURN_SND_DIR)/fm.c \
-	$(M68K_CPU_DIR)/m68kcpu.c \
-	$(M68K_CPU_DIR)/m68kops.c \
 	$(FBNEO_BURN_SND_DIR)/ay8910.c \
 	$(FBNEO_BURN_SND_DIR)/ymdeltat.c
 
-SOURCES_CXX += $(FBNEO_CPU_DIR)/m68000_intf.cpp \
-	$(FBNEO_CPU_DIR)/z80_intf.cpp \
-	$(Z80_CPU_DIR)/z80.cpp \
-	$(Z80_CPU_DIR)/z80ctc.cpp \
-	$(Z80_CPU_DIR)/z80daisy.cpp \
-	$(Z80_CPU_DIR)/z80pio.cpp \
-	$(FBNEO_BURN_SND_DIR)/burn_ym2203.cpp \
+SOURCES_CXX += $(FBNEO_BURN_SND_DIR)/burn_ym2203.cpp \
 	$(FBNEO_BURN_SND_DIR)/burn_ym2608.cpp \
 	$(FBNEO_BURN_SND_DIR)/burn_ym2610.cpp \
 	$(FBNEO_BURN_SND_DIR)/burn_ym2612.cpp \
