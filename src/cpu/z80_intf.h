@@ -48,11 +48,9 @@ void ZetSwapActive(INT32 nCPU);
 INT32 ZetUnmapMemory(INT32 nStart,INT32 nEnd,INT32 nFlags);
 void ZetMapMemory(UINT8 *Mem, INT32 nStart, INT32 nEnd, INT32 nFlags);
 
-#ifdef EMU_MAMEZ80
 INT32 ZetMemCallback(INT32 nStart,INT32 nEnd,INT32 nMode);
 INT32 ZetMapArea(INT32 nStart, INT32 nEnd, INT32 nMode, UINT8 *Mem);
 INT32 ZetMapArea(INT32 nStart, INT32 nEnd, INT32 nMode, UINT8 *Mem01, UINT8 *Mem02);
-#endif
 
 void ZetReset();
 #ifdef EMU_MAMEZ80

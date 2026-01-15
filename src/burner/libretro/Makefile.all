@@ -63,6 +63,7 @@ BURN_BLACKLIST += $(ADSP2100_CPU_DIR)/2100ops.c \
 	$(Z180_CPU_DIR)/z180cb.c \
 	$(TLCS900_CPU_DIR)/900tbl.c \
 	$(FBNEO_CPU_DIR)/c68k_intf.cpp \
+	$(FBNEO_CPU_DIR)/cz80_intf.cpp \
 	$(FBNEO_BURNER_DIR)/wave_writer.cpp \
 	$(FBNEO_BURNER_DIR)/sshot.cpp \
 	$(FBNEO_BURNER_DIR)/cong.cpp \

@@ -381,6 +381,90 @@ void ZetMapMemory(UINT8 *Mem, INT32 nStart, INT32 nEnd, INT32 nFlags)
 	}
 }
 
+// This function will make an area callback ZetRead/ZetWrite
+INT32 ZetMemCallback(INT32 nStart, INT32 nEnd, INT32 nMode)
+{
+#if defined FBNEO_DEBUG
+	if (!DebugCPU_ZetInitted) bprintf(PRINT_ERROR, _T("ZetMemCallback called without init\n"));
+	if (nOpenedCPU == -1) bprintf(PRINT_ERROR, _T("ZetMemCallback called when no CPU open\n"));
+#endif
+
+	UINT8 cStart = (nStart >> 8);
+	UINT8 **pMemMap = ZetCPUContext[nOpenedCPU]->pZetMemMap;
+
+	for (UINT16 i = cStart; i <= (nEnd >> 8); i++) {
+		switch (nMode) {
+			case 0:
+				pMemMap[0     + i] = NULL;
+				break;
+			case 1:
+				pMemMap[0x100 + i] = NULL;
+				break;
+			case 2:
+				pMemMap[0x200 + i] = NULL;
+				pMemMap[0x300 + i] = NULL;
+				break;
+		}
+	}
+
+	return 0;
+}
+
+INT32 ZetMapArea(INT32 nStart, INT32 nEnd, INT32 nMode, UINT8 *Mem)
+{
+#if defined FBNEO_DEBUG
+	if (!DebugCPU_ZetInitted) bprintf(PRINT_ERROR, _T("ZetMapArea called without init\n"));
+	if (nOpenedCPU == -1) bprintf(PRINT_ERROR, _T("ZetMapArea called when no CPU open\n"));
+#endif
+
+	UINT8 cStart = (nStart >> 8);
+	UINT8 **pMemMap = ZetCPUContext[nOpenedCPU]->pZetMemMap;
+
+	for (UINT16 i = cStart; i <= (nEnd >> 8); i++) {
+		switch (nMode) {
+			case 0: {
+				pMemMap[0     + i] = Mem + ((i - cStart) << 8);
+				break;
+			}
+
+			case 1: {
+				pMemMap[0x100 + i] = Mem + ((i - cStart) << 8);
+				break;
+			}
+
+			case 2: {
+				pMemMap[0x200 + i] = Mem + ((i - cStart) << 8);
+				pMemMap[0x300 + i] = Mem + ((i - cStart) << 8);
+				break;
+			}
+		}
+	}
+
+	return 0;
+}
+
+INT32 ZetMapArea(INT32 nStart, INT32 nEnd, INT32 nMode, UINT8 *Mem01, UINT8 *Mem02)
+{
+#if defined FBNEO_DEBUG
+	if (!DebugCPU_ZetInitted) bprintf(PRINT_ERROR, _T("ZetMapArea called without init\n"));
+	if (nOpenedCPU == -1) bprintf(PRINT_ERROR, _T("ZetMapArea called when no CPU open\n"));
+#endif
+
+	UINT8 cStart = (nStart >> 8);
+	UINT8 **pMemMap = ZetCPUContext[nOpenedCPU]->pZetMemMap;
+	
+	if (nMode != 2) {
+		return 1;
+	}
+	
+	for (UINT16 i = cStart; i <= (nEnd >> 8); i++) {
+		pMemMap[0x200 + i] = Mem01 + ((i - cStart) << 8);
+		pMemMap[0x300 + i] = Mem02 + ((i - cStart) << 8);
+	}
+
+	return 0;
+}
+
 void ZetReset()
 {
 #if defined FBNEO_DEBUG
