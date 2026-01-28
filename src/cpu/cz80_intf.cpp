@@ -452,11 +452,11 @@ INT32 ZetMapArea(INT32 nStart, INT32 nEnd, INT32 nMode, UINT8 *Mem01, UINT8 *Mem
 
 	UINT8 cStart = (nStart >> 8);
 	UINT8 **pMemMap = ZetCPUContext[nOpenedCPU]->pZetMemMap;
-	
+
 	if (nMode != 2) {
 		return 1;
 	}
-	
+
 	for (UINT16 i = cStart; i <= (nEnd >> 8); i++) {
 		pMemMap[0x200 + i] = Mem01 + ((i - cStart) << 8);
 		pMemMap[0x300 + i] = Mem02 + ((i - cStart) << 8);
