@@ -62,7 +62,6 @@ BURN_BLACKLIST += $(ADSP2100_CPU_DIR)/2100ops.c \
 	$(Z180_CPU_DIR)/z180dd.c \
 	$(Z180_CPU_DIR)/z180cb.c \
 	$(TLCS900_CPU_DIR)/900tbl.c \
-	$(FBNEO_CPU_DIR)/c68k_intf.cpp \
 	$(FBNEO_CPU_DIR)/cz80_intf.cpp \
 	$(FBNEO_BURNER_DIR)/wave_writer.cpp \
 	$(FBNEO_BURNER_DIR)/sshot.cpp \
@@ -105,8 +104,52 @@ ifeq ($(USE_CYCLONE), 1)
 	endif
 	CFLAGS			+= -fno-optimize-sibling-calls -funsafe-math-optimizations -fsingle-precision-constant
 	CXXFLAGS		+= -fno-optimize-sibling-calls -funsafe-math-optimizations -fsingle-precision-constant
+else ifeq ($(USE_C68K),1)
+	FBNEO_DEFINES += -DUSE_C68K
+	BURN_BLACKLIST += $(M68K_CPU_DIR)/m68kcpu.c \
+        $(M68K_CPU_DIR)/m68kops.c \
+        $(FBNEO_CPU_DIR)/c68000_intf.cpp \
+        $(FBNEO_CPU_DIR)/m68000_intf.cpp \
+        $(MD_DIR)/d_mdarcbl.cpp \
+        $(MD_DIR)/d_megadrive.cpp \
+        $(MD_DIR)/megadrive.cpp \
+        $(MD_DIR)/stm95.cpp \
+        $(SEGA_DIR)/d_119.cpp \
+        $(SEGA_DIR)/d_angelkds.cpp \
+        $(SEGA_DIR)/d_appoooh.cpp \
+        $(SEGA_DIR)/d_bankp.cpp \
+        $(SEGA_DIR)/d_dotrikun.cpp \
+        $(SEGA_DIR)/d_hangon.cpp \
+        $(SEGA_DIR)/d_outrun.cpp \
+        $(SEGA_DIR)/d_segac2.cpp \
+        $(SEGA_DIR)/d_segae.cpp \
+        $(SEGA_DIR)/d_segag80v.cpp \
+        $(SEGA_DIR)/d_segas32.cpp \
+        $(SEGA_DIR)/d_suprloco.cpp \
+        $(SEGA_DIR)/d_sys1.cpp \
+        $(SEGA_DIR)/d_sys16a.cpp \
+        $(SEGA_DIR)/d_sys16b.cpp \
+        $(SEGA_DIR)/d_sys18.cpp \
+        $(SEGA_DIR)/d_sys24.cpp \
+        $(SEGA_DIR)/d_turbo.cpp \
+        $(SEGA_DIR)/d_xbrd.cpp \
+        $(SEGA_DIR)/d_ybrd.cpp \
+        $(SEGA_DIR)/d_zaxxon.cpp \
+        $(SEGA_DIR)/fd1089.cpp \
+        $(SEGA_DIR)/fd1094.cpp \
+        $(SEGA_DIR)/fd1094_intf.cpp \
+        $(SEGA_DIR)/genesis_vid.cpp \
+        $(SEGA_DIR)/mc8123.cpp \
+        $(SEGA_DIR)/sega_315_5195.cpp \
+        $(SEGA_DIR)/sys16_fd1094.cpp \
+        $(SEGA_DIR)/sys16_gfx.cpp \
+        $(SEGA_DIR)/sys16_run.cpp \
+        $(SEGA_DIR)/usb_snd.cpp \
+        $(PRE90S_DIR)/d_freekick.cpp \
+        $(PRE90S_DIR)/d_ninjakd2.cpp
 else
-	BURN_BLACKLIST	+= $(FBNEO_CPU_DIR)/c68000_intf.cpp
+	BURN_BLACKLIST	+= $(FBNEO_CPU_DIR)/c68000_intf.cpp \
+	    $(FBNEO_CPU_DIR)/c68k_intf.cpp
 endif
 
 SOURCES_CXX += $(FBNEO_BURN_DIR)/burn_bitmap.cpp \

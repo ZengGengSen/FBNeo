@@ -19,6 +19,7 @@
 
 #if defined USE_C68K
   #include "c68k/c68k.h"
+  #define M68K_INT_ACK_AUTOVECTOR C68K_INT_ACK_AUTOVECTOR
 #elif defined EMU_M68K
  #include "m68k/m68k.h"
 #endif
