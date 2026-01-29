@@ -89,7 +89,7 @@ static UINT8 *SZHVC_sub = 0;
 #define zIFF1		CPU->iff.b.h
 #define zIFF2		CPU->iff.b.l
 
-#define GET_OP()    (*(UINT8 *)(PC + PCDiff))
+#define GET_OP()	(*(UINT8 *)(PC + PCDiff))
 #define READ_OP()   GET_OP(); PC++
 
 #define _SSOP(A,B)			A##B
@@ -100,89 +100,101 @@ static UINT8 *SZHVC_sub = 0;
 #define OPXYCB(A)			_SSOP(OPXYCB,A)
 
 #define ARG()			(*(UINT8 *)PC++)
+#ifdef LSB_FIRST
 #define ARG16()			(*(UINT8 *)PC | (*(UINT8 *)(PC + 1) << 8)); PC += 2
+#else
+#define ARG16()			(*(UINT8 *)(PC + 1) | (*(UINT8 *)PC << 8)); PC += 2
+#endif
 
 #define USE_CYCLES(A)		Z80->nCyclesLeft -= (A);
 #define ADD_CYCLES(A)		Z80->nCyclesLeft += (A);
-#define RET(A) {													\
-	Z80->nCyclesLeft -= A;											\
-	if (!Z80->bStopRun && Z80->nCyclesLeft > 0)						\
-		goto Cz80_Exec;												\
-	goto Cz80_Exec_End;												\
+#define RET(A) {															\
+	Z80->nCyclesLeft -= A;													\
+	if (!Z80->bStopRun && Z80->nCyclesLeft > 0)								\
+		goto Cz80_Exec;														\
+	goto Cz80_Exec_End;														\
 }
 
-#define READ_MEM8(A, D) {											\
-	UINT8 *ptr = Z80->pZetMemMap[0x000 | (A) >> 8];	                \
-	if (ptr) {														\
-		D = ptr[A & 0xff];											\
-	} else {														\
-		zPC = PC;													\
-		D = Z80->ZetRead(A);										\
-	}																\
+#define READ_MEM8(A, D) {													\
+	UINT8 *ptr = Z80->pZetMemMap[0x000 | (A) >> 8];							\
+	if (ptr) {																\
+		ptr -= (A & ~0xff);													\
+		D = ptr[A];															\
+	} else {																\
+		zPC = PC;															\
+		D = Z80->ZetRead(A);												\
+	}																		\
 }
 
-#define READ_MEM16(A, D) {											\
-	UINT8 *ptr = Z80->pZetMemMap[0x000 | (A) >> 8];     	        \
-	if (ptr) {														\
-		D = ptr[(A) & 0xff] | (ptr[((A) & 0xff)+1] << 8);			\
-	} else {														\
-		zPC = PC;													\
-		D = Z80->ZetRead((A) & 0xff);                               \
-		D |= Z80->ZetRead(((A)+1) & 0xff) << 8;			            \
-	}																\
+#define READ_MEM16(A, D) {													\
+	UINT8 *ptr = Z80->pZetMemMap[0x000 | (A) >> 8];							\
+	if (ptr) {																\
+		ptr -= (A & ~0xff);													\
+		D = ptr[A] | (ptr[(A)+1] << 8);										\
+	} else {																\
+		zPC = PC;															\
+		D = Z80->ZetRead(A) | (Z80->ZetRead((A)+1) << 8);					\
+	}																		\
 }
 
-#define WRITE_MEM8(A, D) {											\
-	UINT8 *ptr = Z80->pZetMemMap[0x100 | (A) >> 8];	                \
-	if ( ptr ) {													\
-		ptr[(A) & 0xff] = D;										\
-	} else {														\
-		zPC = PC;													\
-		Z80->ZetWrite((A) & 0xff, D);								\
-	}																\
+#define WRITE_MEM8(A, D) {													\
+	UINT8 *ptr = Z80->pZetMemMap[0x100 | (A) >> 8];							\
+	if ( ptr ) {															\
+		ptr -= (A & ~0xff);													\
+		ptr[A] = D;															\
+	} else {																\
+		zPC = PC;															\
+		Z80->ZetWrite(A, D);												\
+	}																		\
 }
 
-#define WRITE_MEM16(A, D) {											\
-	UINT8 *ptr = Z80->pZetMemMap[0x100 | (A) >> 8];	                \
-	if ( ptr ) {													\
-		ptr[(A) & 0xff] = D;										\
-		ptr[((A)+1) & 0xff] = (D) >> 8;								\
-	} else {														\
-		zPC = PC;													\
-		Z80->ZetWrite((A) & 0xff, D);								\
-		Z80->ZetWrite(((A) + 1) & 0xff, (D) >> 8);					\
-	}																\
+#define WRITE_MEM16(A, D) {													\
+	UINT8 *ptr = Z80->pZetMemMap[0x100 | (A) >> 8];							\
+	if ( ptr ) {															\
+		ptr -= (A & ~0xff);													\
+		ptr[A] = D;															\
+		ptr[(A)+1] = (D) >> 8;												\
+	} else {																\
+		zPC = PC;															\
+		Z80->ZetWrite(A, D);												\
+		Z80->ZetWrite((A) + 1, (D) >> 8);									\
+	}																		\
 }
 
-#define PUSH_16(A) {													\
-	UINT8 *ptr = Z80->pZetMemMap[0x100 | (zSP) >> 8];	                \
-	zSP -= 2;															\
-	if (ptr) {															\
-		ptr[(zSP) & 0xff] = A;											\
-		ptr[((zSP)+1) & 0xff] = (A) >> 8;								\
-	}																	\
+#define PUSH_16(A) {														\
+	UINT8 *ptr = Z80->pZetMemMap[0x100 | (zSP) >> 8];						\
+	if (ptr) {																\
+		ptr -= (zSP & ~0xff);												\
+		zSP -= 2;															\
+		ptr[zSP] = A;														\
+		ptr[(zSP)+1] = (A) >> 8;											\
+	} else {																\
+		zSP -= 2;															\
+	}																		\
 }
 
-#define POP_16(A) {													    \
-	UINT8 *ptr = Z80->pZetMemMap[0x000 | (zSP) >> 8];	                \
-	if (ptr)														    \
-		A = ptr[(zSP) & 0xff] | (ptr[((zSP)+1) & 0xff] << 8);           \
-	zSP += 2; 														    \
+#define POP_16(A) {															\
+	UINT8 *ptr = Z80->pZetMemMap[0x000 | (zSP) >> 8];						\
+	if (ptr) {																\
+		ptr -= (zSP & ~0xff);												\
+		A = ptr[zSP] | (ptr[(zSP)+1] << 8);									\
+	}																		\
+	zSP += 2; 																\
 }
 
-#define SET_PC(A)														\
-	zBasePC = (uintptr_t)Z80->pZetMemMap[0x200 | (A) >> 8];	            \
-	if (zBasePC <= 0) {                                                 \
-        Z80->nCyclesLeft = -1;                                          \
-        goto Cz80_Exec_Really_End;                                      \
-	}                                                                   \
-	PCDiff = (uintptr_t)Z80->pZetMemMap[0x300 | (A) >> 8]               \
-        - (uintptr_t)Z80->pZetMemMap[0x200 | (A) >> 8];                 \
-	PC = (uintptr_t)(A & 0xff) + zBasePC;
+#define SET_PC(A)															\
+	zBasePC = (uintptr_t)Z80->pZetMemMap[0x300 | (A) >> 8];					\
+	if (zBasePC == 0) {														\
+		Z80->nCyclesLeft = -1;												\
+		goto Cz80_Exec_Really_End;											\
+	}																		\
+	zBasePC -= (A & ~0xff);													\
+	PCDiff = PC_DIFF(A);													\
+	PC = zBasePC + (uintptr_t)(A);
 
-#define PC_DIFF(A)                                                      \
-    (uintptr_t)Z80->pZetMemMap[0x300 | (A) >> 8]                        \
-        - (uintptr_t)Z80->pZetMemMap[0x200 | (A) >> 8]
+#define PC_DIFF(A)															\
+	(uintptr_t)(Z80->pZetMemMap[0x300 | (A) >> 8]) - 						\
+		(uintptr_t)(Z80->pZetMemMap[0x200 | (A) >> 8])
 
 #define Z80_IRQSTATUS_NONE	0x8000
 #define Z80_IRQSTATUS_AUTO	0x2000
@@ -882,7 +894,7 @@ Cz80_Exec:
 		OP(0x74):   // LD   (HL),H
 		OP(0x75):   // LD   (HL),L
 		OP(0x77):   // LD   (HL),A
-		    WRITE_MEM8(zHL, zR8(Opcode & 7));
+			WRITE_MEM8(zHL, zR8(Opcode & 7));
 			RET(7)
 
 		OP(0x36):   // LD (HL), #imm
@@ -3370,7 +3382,7 @@ static INT32 Z80Nmi() {
 
 	zIFF1 = 0;
 	PUSH_16(zPC - zBasePC);
-	zBasePC = (uintptr_t)Z80->pZetMemMap[0x200];
+	zBasePC = (uintptr_t)Z80->pZetMemMap[0x300];
 	zPC = zBasePC + 0x66;
 	return 12;
 }
