@@ -190,7 +190,7 @@ INT32 ZetInit(INT32 nCPU)
 	if (nCPU == 0)
 		Z80InitFlags(); // initialize flags arrays
 
-    Z80Init(); // clear/init next z80 slot (internal to z80.cpp)
+	Z80Init(); // clear/init next z80 slot (internal to z80.cpp)
 
 	{
 		ZetCPUContext[nCPU]->ZetIn = ZetDummyInHandler;
@@ -344,11 +344,11 @@ void ZetExit()
 
 	if (!DebugCPU_ZetInitted) return;
 
-    for (INT32 i = 0; i < nCPUCount; i++) {
-        ZetOpen(i);
-        Z80Exit(); // exit daisy chain & peripherals attached to this cpu.
-        ZetClose();
-    }
+	for (INT32 i = 0; i < nCPUCount; i++) {
+		ZetOpen(i);
+		Z80Exit(); // exit daisy chain & peripherals attached to this cpu.
+		ZetClose();
+	}
 
 	for (INT32 i = 0; i < MAX_Z80; i++) {
 		if (ZetCPUContext[i]) {
@@ -374,10 +374,10 @@ void ZetMapMemory(UINT8 *Mem, INT32 nStart, INT32 nEnd, INT32 nFlags)
 	UINT8 **pMemMap = ZetCPUContext[nOpenedCPU]->pZetMemMap;
 
 	for (UINT16 i = cStart; i <= (nEnd >> 8); i++) {
-		if (nFlags & MAP_READ)     pMemMap[0     + i] = Mem + ((i - cStart) << 8);
-		if (nFlags & MAP_WRITE)    pMemMap[0x100 + i] = Mem + ((i - cStart) << 8);
-		if (nFlags & MAP_FETCHOP)  pMemMap[0x200 + i] = Mem + ((i - cStart) << 8);
-		if (nFlags & MAP_FETCHARG) pMemMap[0x300 + i] = Mem + ((i - cStart) << 8);
+		if (nFlags & MAP_READ)		pMemMap[0x000 + i] = Mem + ((i - cStart) << 8);
+		if (nFlags & MAP_WRITE)		pMemMap[0x100 + i] = Mem + ((i - cStart) << 8);
+		if (nFlags & MAP_FETCHOP)	pMemMap[0x200 + i] = Mem + ((i - cStart) << 8);
+		if (nFlags & MAP_FETCHARG)	pMemMap[0x300 + i] = Mem + ((i - cStart) << 8);
 	}
 }
 
@@ -394,16 +394,10 @@ INT32 ZetMemCallback(INT32 nStart, INT32 nEnd, INT32 nMode)
 
 	for (UINT16 i = cStart; i <= (nEnd >> 8); i++) {
 		switch (nMode) {
-			case 0:
-				pMemMap[0     + i] = NULL;
-				break;
-			case 1:
-				pMemMap[0x100 + i] = NULL;
-				break;
-			case 2:
-				pMemMap[0x200 + i] = NULL;
-				pMemMap[0x300 + i] = NULL;
-				break;
+			case 0: pMemMap[0x000 + i] = NULL; break;
+			case 1: pMemMap[0x100 + i] = NULL; break;
+			case 2: pMemMap[0x200 + i] = NULL;
+					pMemMap[0x300 + i] = NULL; break;
 		}
 	}
 
@@ -422,21 +416,10 @@ INT32 ZetMapArea(INT32 nStart, INT32 nEnd, INT32 nMode, UINT8 *Mem)
 
 	for (UINT16 i = cStart; i <= (nEnd >> 8); i++) {
 		switch (nMode) {
-			case 0: {
-				pMemMap[0     + i] = Mem + ((i - cStart) << 8);
-				break;
-			}
-
-			case 1: {
-				pMemMap[0x100 + i] = Mem + ((i - cStart) << 8);
-				break;
-			}
-
-			case 2: {
-				pMemMap[0x200 + i] = Mem + ((i - cStart) << 8);
-				pMemMap[0x300 + i] = Mem + ((i - cStart) << 8);
-				break;
-			}
+			case 0: pMemMap[0x000 + i] = Mem + ((i - cStart) << 8); break;
+			case 1: pMemMap[0x100 + i] = Mem + ((i - cStart) << 8); break;
+			case 2: pMemMap[0x200 + i] = Mem + ((i - cStart) << 8);
+					pMemMap[0x300 + i] = Mem + ((i - cStart) << 8); break;
 		}
 	}
 
@@ -520,6 +503,7 @@ void ZetSetIRQLine(const INT32 line, const INT32 status)
 			ZetCPUContext[nOpenedCPU]->nInterruptLatch = 0x2000 | line;
 			break;
 		case CPU_IRQSTATUS_HOLD:
+			ZetCPUContext[nOpenedCPU]->nInterruptLatch = 0x4000 | line;
 			break;
 	}
 }

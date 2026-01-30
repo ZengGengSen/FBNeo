@@ -197,6 +197,7 @@ static UINT8 *SZHVC_sub = 0;
 		(uintptr_t)(Z80->pZetMemMap[0x200 | (A) >> 8])
 
 #define Z80_IRQSTATUS_NONE	0x8000
+#define Z80_IRQSTATUS_HOLD	0x4000
 #define Z80_IRQSTATUS_AUTO	0x2000
 #define Z80_IRQSTATUS_ACK	0x1000
 
@@ -281,6 +282,17 @@ static void Z80InitFlags() {
 	}
 }
 
+static void RebasePC(UINT16 address) {
+	ZetExt *Z80 = ZetCPUContext[nOpenedCPU];
+
+	zBasePC = (uintptr_t)Z80->pZetMemMap[0x300 | (address) >> 8];
+	if (zBasePC == 0)
+		return;
+
+	zBasePC -= (address & ~0xff);
+	zPC = zBasePC + (uintptr_t)(address);
+}
+
 static void Z80Init() {
 	ZetExt *Z80 = ZetCPUContext[nOpenedCPU];
 
@@ -342,14 +354,15 @@ static void Z80Exit() {
 static void Z80Reset() {
 	ZetExt *Z80 = ZetCPUContext[nOpenedCPU];
 
-	zBasePC = (uintptr_t)Z80->pZetMemMap[0x300];
-	zPC = zBasePC;
+	RebasePC(0);
 
 	zI = 0;
 	zR = 0;
 	zR2 = 0;
 	zIFF1 = 0;
 	zIFF2 = 0;
+
+	Z80->nInterruptLatch = Z80_IRQSTATUS_NONE | 0xff;
 
 	// TODO: nmi state
 	// nmi_pending
@@ -798,7 +811,10 @@ Cz80_Exec:
 		Reg16 *data = pzHL;
 		Opcode = READ_OP();
 
-		// printf("op:%02x, PC:%08x-%08x=%04x, A:%02x, F:%02x, BC:%04x, DE:%04x, HL:%04x, ICount: %d\n", Opcode, PC, zBasePC, PC - zBasePC, zA, zF, zBC, zDE, zHL, Z80->nCyclesLeft);
+		// printf("op:%02x, PC:%04x, A:%02x, F:%02x, BC:%04x, DE:%04x, HL:%04x, ICount: %d, irq_vector: %02x\n",
+		// 	Opcode, PC - zBasePC, zA, zF, zBC, zDE, zHL, Z80->nCyclesLeft,
+		// 	Z80->nInterruptLatch & 0xff
+		// );
 
 		goto *JumpTable[Opcode];
 		// NOP
@@ -3301,15 +3317,23 @@ Cz80_Try_Int:
 
 		if (GET_OP() == 0x76) PC++;
 
-//		printf("Z80 Interrupt: irq_vector $%06x\n", Z80->nInterruptLatch & 0xff);
+		// printf("Z80 Interrupt: irq_vector $%06x\n", Z80->nInterruptLatch & 0xff);
+		/* "hold_irq" assures that an irq request (with CPU_IRQSTATUS_HOLD) gets
+		   acknowleged.  This is designed to get around the following 2 problems:
+
+		   1) Requests made with CPU_IRQSTATUS_AUTO might get skipped in
+		   circumstances where IRQs are disabled at the moment it was requested.
+
+		   2) Requests made with CPU_IRQSTATUS_ACK might cause more than 1 irq to
+		   get taken if is held in the _ACK state for too long(!) - dink jan.2016
+		*/
+		if (Z80->nInterruptLatch & Z80_IRQSTATUS_HOLD) {
+			Z80->nInterruptLatch &= ~Z80_IRQSTATUS_HOLD;
+			Z80->nInterruptLatch |= Z80_IRQSTATUS_NONE;
+		}
 
 		zIFF = 0;
-		if (zIM == 0) {
-			PUSH_16( zRealPC );
-			SET_PC( Z80->nInterruptLatch & 0x38 );
-			if (Z80->nInterruptLatch & Z80_IRQSTATUS_AUTO) Z80->nInterruptLatch = Z80_IRQSTATUS_NONE;
-			Z80->nCyclesLeft -= 13;
-		} else if (zIM == 2) {
+		if (zIM == 2) {
 			int nTabAddr = 0, nIntAddr = 0;
 			nTabAddr = ((unsigned short)zI << 8) + (Z80->nInterruptLatch & 0xFF);
 			READ_MEM16( nTabAddr, nIntAddr );
@@ -3317,9 +3341,14 @@ Cz80_Try_Int:
 			SET_PC(nIntAddr);
 			if (Z80->nInterruptLatch & Z80_IRQSTATUS_AUTO) Z80->nInterruptLatch = Z80_IRQSTATUS_NONE;
 			Z80->nCyclesLeft -= 19;
-		} else {
+		} else if (zIM == 1) {
 			PUSH_16(zRealPC);
 			SET_PC( 0x38 );
+			if (Z80->nInterruptLatch & Z80_IRQSTATUS_AUTO) Z80->nInterruptLatch = Z80_IRQSTATUS_NONE;
+			Z80->nCyclesLeft -= 13;
+		} else {
+			PUSH_16( zRealPC );
+			SET_PC( Z80->nInterruptLatch & 0x38 );
 			if (Z80->nInterruptLatch & Z80_IRQSTATUS_AUTO) Z80->nInterruptLatch = Z80_IRQSTATUS_NONE;
 			Z80->nCyclesLeft -= 13;
 		}
@@ -3382,7 +3411,6 @@ static INT32 Z80Nmi() {
 
 	zIFF1 = 0;
 	PUSH_16(zPC - zBasePC);
-	zBasePC = (uintptr_t)Z80->pZetMemMap[0x300];
-	zPC = zBasePC + 0x66;
+	RebasePC(0x66);
 	return 12;
 }
