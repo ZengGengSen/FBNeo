@@ -1666,14 +1666,17 @@ INT32 SekSetWriteLongHandler(INT32 i, pSekWriteLongHandler pHandler)
 // ----------------------------------------------------------------------------
 // Query register values
 
-UINT32 SekGetPC(INT32)
+UINT32 SekGetPC(INT32 nCPU)
 {
 #if defined FBNEO_DEBUG
 	if (!DebugCPU_SekInitted) bprintf(PRINT_ERROR, _T("SekGetPC called without init\n"));
 	if (nSekActive == -1) bprintf(PRINT_ERROR, _T("SekGetPC called when no CPU open\n"));
 #endif
 
-	return SekC68KCurrentContext->PC - SekC68KCurrentContext->BasePC;
+	SekCPUPush(nCPU);
+	UINT32 ret = SekC68KCurrentContext->PC - SekC68KCurrentContext->BasePC;
+	SekCPUPop();
+	return ret;
 }
 
 UINT32 SekGetPPC(INT32)
