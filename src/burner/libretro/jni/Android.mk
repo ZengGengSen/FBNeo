@@ -22,6 +22,15 @@ ifeq ($(TARGET_ARCH_ABI),x86)
   SUPPORT_LARGE_FILES     := 0
 endif
 
+# TARGET
+ifeq ($(SUBSET),)
+	TARGET_NAME := fbneo
+	INCLUDED_MAKEFILE = Makefile.all
+else
+	TARGET_NAME := fbneo_$(SUBSET)
+	INCLUDED_MAKEFILE = $(SUBSET).mk
+endif
+
 CFLAGS      :=
 CXXFLAGS    :=
 LDFLAGS     :=
@@ -30,7 +39,7 @@ SOURCES_CXX :=
 FBNEO_DEFINES :=
 
 include $(LOCAL_PATH)/../Makefile.common
-include $(LOCAL_PATH)/../Makefile.all
+include $(LOCAL_PATH)/../$(INCLUDED_MAKEFILE)
 
 COMMON_FLAGS := -DUSE_SPEEDHACKS -D__LIBRETRO__ -DANDROID -Wno-write-strings -DLSB_FIRST $(FBNEO_DEFINES)
 
@@ -39,8 +48,8 @@ include $(CLEAR_VARS)
 LOCAL_MODULE       := retro
 LOCAL_SRC_FILES    := $(SOURCES_C) $(SOURCES_S) $(SOURCES_CXX)
 LOCAL_C_INCLUDES   := $(INCLUDE_DIRS)
-LOCAL_CFLAGS       := $(CFLAGS) $(COMMON_FLAGS)
-LOCAL_CPPFLAGS     := $(CXXFLAGS) $(COMMON_FLAGS)
+LOCAL_CFLAGS       := $(CFLAGS) $(COMMON_FLAGS) -O3
+LOCAL_CPPFLAGS     := $(CXXFLAGS) $(COMMON_FLAGS) -O3
 LOCAL_LDFLAGS      := -Wl,-version-script=$(MAIN_FBNEO_DIR)/burner/libretro/link.T
 LOCAL_LDLIBS       := $(LDFLAGS)
 LOCAL_CPP_FEATURES := exceptions rtti
