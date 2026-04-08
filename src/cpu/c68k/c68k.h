@@ -118,10 +118,12 @@ typedef struct c68k_t
 	unsigned int USP;
 	uintptr_t PC;
 
-	unsigned int HaltState;
+	unsigned int stopped;
 	int IRQLine;
 	int IRQState;
 	int ICount;
+
+	int end_run;
 
 	uintptr_t BasePC;
 

@@ -1129,7 +1129,7 @@ OP(trap)
 	SWAP_SP()
 	res = C68K_TRAP_BASE_EX + (Opcode & 0x0f);
 	EXCEPTION(res)
-	RET(34)
+	RET(34 + 4)
 }
 
 /*-----------------------------------------------------------------------------
@@ -1219,7 +1219,7 @@ OP(stop)
 		res &= C68K_SR_MASK;
 		SET_SR(res)
 		SWAP_SP()
-		RET_HALT()
+		RET_STOP()
 	}
 	PC += 2;
 	SWAP_SP_NOCHECK()

@@ -1,13 +1,3 @@
-/******************************************************************************
- *
- * C68K (68000 CPU emulator) version 0.80
- * Compiled with Dev-C++
- * Copyright 2003-2004 Stephane Dallongeville
- *
- * (Modified by NJ)
- *
- *****************************************************************************/
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -34,45 +24,11 @@
 
 #define ALIGN_DATA				__attribute__((aligned(4)))
 
-/******************************************************************************
-	}N
-******************************************************************************/
-
 #include "c68kmacro.h"
 
-
-/******************************************************************************
-	O[o\
-******************************************************************************/
-
 c68k_struc ALIGN_DATA C68K;
-
-
-/******************************************************************************
-	̃[Jϐ
-******************************************************************************/
-
 static void  **JumpTable=NULL;
-//static UINT8 ALIGN_DATA c68k_bad_address[1 << C68K_FETCH_SFT];
-
-
-/******************************************************************************
-	[J֐
-******************************************************************************/
-
-/******************************************************************************
-	C68KC^tF[X֐
-******************************************************************************/
-
-
 static int bC68KInit = 0;
-
-
-
-/*--------------------------------------------------------
-	CPU
-s
---------------------------------------------------------*/
 
 inline static INT32 C68k_Exec(c68k_struc *CPU, INT32 cycles)
 {
@@ -87,14 +43,13 @@ inline static INT32 C68k_Exec(c68k_struc *CPU, INT32 cycles)
 
 		PC = CPU->PC;
 		CPU->ICount = cycles;
+		CPU->end_run = 0;
 
 C68k_Check_Interrupt:
 		CHECK_INT
-		if (!CPU->HaltState)
-		{
-
+		if (!CPU->stopped) {
 C68k_Exec_Next:
-			if (CPU->ICount > 0)
+			if (CPU->ICount > 0 && !CPU->end_run)
 			{
 				Opcode = READ_IMM_16();
 				PC += 2;
@@ -102,6 +57,8 @@ C68k_Exec_Next:
 
 				#include "c68k_op.c"
 			}
+		} else {
+			CPU->ICount = 0;
 		}
 
 		CPU->PC = PC;
@@ -116,29 +73,14 @@ C68k_Exec_Next:
 	return 0;
 }
 
-
-/*--------------------------------------------------------
-	荞ݏ
---------------------------------------------------------*/
-
 inline static void C68k_Set_IRQ(c68k_struc *CPU, INT32 line, INT32 state)
 {
 	CPU->IRQState = state;
 	if (state == CLEAR_LINE)
-	{
 		CPU->IRQLine = 0;
-	}
 	else
-	{
 		CPU->IRQLine = line;
-		CPU->HaltState = 0;
-	}
 }
-
-
-/*--------------------------------------------------------
-	WX^擾
---------------------------------------------------------*/
 
 inline static UINT32 C68k_Get_Reg(c68k_struc *CPU, INT32 regnum)
 {
@@ -167,11 +109,6 @@ inline static UINT32 C68k_Get_Reg(c68k_struc *CPU, INT32 regnum)
 	default: return 0;
 	}
 }
-
-
-/*--------------------------------------------------------
-	WX^ݒ
---------------------------------------------------------*/
 
 inline static void C68k_Set_Reg(c68k_struc *CPU, INT32 regnum, UINT32 val)
 {
@@ -216,28 +153,6 @@ inline static void C68k_Set_Reg(c68k_struc *CPU, INT32 regnum, UINT32 val)
 
 }
 
-
-/*--------------------------------------------------------
-	t胃Fb`AhXݒ
---------------------------------------------------------*/
-
-#if 0
-void C68k_Set_Fetch(c68k_struc *CPU, UINT32 low_adr, UINT32 high_adr, UINT32 fetch_adr)
-{
-	UINT32 i, j;
-
-	i = (low_adr >> C68K_FETCH_SFT) & C68K_FETCH_MASK;
-	j = (high_adr >> C68K_FETCH_SFT) & C68K_FETCH_MASK;
-	fetch_adr -= i << C68K_FETCH_SFT;
-	while (i <= j) CPU->Fetch[i++] = fetch_adr;
-}
-#endif
-
-
-/*--------------------------------------------------------
-	R胁[obN֐ݒ
---------------------------------------------------------*/
-
 inline static void C68k_Set_IRQ_Callback(c68k_struc *CPU, INT32 (*Func)(INT32 irqline))
 {
 	CPU->Interrupt_CallBack = Func;
@@ -248,10 +163,6 @@ inline static void C68k_Set_Reset_Callback(c68k_struc *CPU, void (*Func)(void))
 	CPU->Reset_CallBack = Func;
 }
 
-
-/*--------------------------------------------------------
-	CPU?
---------------------------------------------------------*/
 inline static void C68k_Init(c68k_struc *CPU)
 {
 	if ( !bC68KInit ) {
@@ -269,18 +180,18 @@ inline static void C68k_Exit()
 		bC68KInit = 0;
 	}
 }
-/*--------------------------------------------------------
-	CPU?Zbg
---------------------------------------------------------*/
 
 inline static void C68k_Reset(c68k_struc *CPU)
 {
 	UINT32 PC;
 
-	memset(CPU, 0, (uintptr_t)&CPU->BasePC - (uintptr_t)CPU);
+	CPU->stopped = 0;
+	CPU->ICount = 0;
 
 	CPU->flag_I = 7;
 	CPU->flag_S = C68K_SR_S;
+
+	CPU->IRQLine = 0;
 
 	CPU->A[7]  = READ_PCREL_32(0);
 	PC = READ_PCREL_32(4);

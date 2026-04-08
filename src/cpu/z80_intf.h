@@ -53,12 +53,14 @@ INT32 ZetMapArea(INT32 nStart, INT32 nEnd, INT32 nMode, UINT8 *Mem);
 INT32 ZetMapArea(INT32 nStart, INT32 nEnd, INT32 nMode, UINT8 *Mem01, UINT8 *Mem02);
 
 void ZetReset();
-#ifdef EMU_MAMEZ80
 void ZetReset(INT32 nCPU);
+#ifdef EMU_MAMEZ80
 UINT32 ZetGetPC(INT32 n);
 INT32 ZetGetPrevPC(INT32 n);
 INT32 ZetBc(INT32 n);
+#endif
 INT32 ZetDe(INT32 n);
+#ifdef EMU_MAMEZ80
 INT32 ZetHL(INT32 n);
 INT32 ZetI(INT32 n);
 INT32 ZetSP(INT32 n);
@@ -72,19 +74,20 @@ void ZetSetIRQLine(INT32 nCPU, const INT32 line, const INT32 status);
 INT32 ZetNmi();
 INT32 ZetIdle(INT32 nCycles);
 INT32 ZetTotalCycles();
-
+INT32 ZetTotalCycles(INT32 nCPU);
 
 #ifdef EMU_MAMEZ80
 INT32 ZetRun(INT32 nCPU, INT32 nCycles);
 void ZetRunEnd(INT32 nCPU);
+#endif
 void ZetSetVector(INT32 vector);
 void ZetSetVector(INT32 nCPU, INT32 vector);
+#ifdef EMU_MAMEZ80
 UINT8 ZetGetVector();
 UINT8 ZetGetVector(INT32 nCPU);
 INT32 ZetNmi(INT32 nCPU);
 INT32 ZetIdle(INT32 nCPU, INT32 nCycles);
 INT32 ZetSegmentCycles();
-INT32 ZetTotalCycles(INT32 nCPU);
 void ZetSetAF(INT32 n, UINT16 value);
 void ZetSetAF2(INT32 n, UINT16 value);
 void ZetSetBC(INT32 n, UINT16 value);
@@ -125,9 +128,9 @@ INT32 ZetGetHALT(INT32 nCPU);
 
 #define ZetSetBUSREQLine ZetSetHALT
 
+void ZetSetRESETLine(INT32 nStatus);
 #ifdef EMU_MAMEZ80
 void ZetSetRESETLine(INT32 nCPU, INT32 nStatus);
-void ZetSetRESETLine(INT32 nStatus);
 INT32 ZetGetRESETLine();
 INT32 ZetGetRESETLine(INT32 nCPU);
 #endif

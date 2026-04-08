@@ -1165,7 +1165,6 @@ void SekSetIRQLine(const INT32 line, INT32 nstatus)
 
 		SekC68KCurrentContext->IRQState = 1;	//ASSERT_LINE
 		SekC68KCurrentContext->IRQLine = line;
-		SekC68KCurrentContext->HaltState = 0;
 		return;
 	}
 
@@ -1258,10 +1257,7 @@ void SekRunEnd()
 	if (nSekActive == -1) bprintf(PRINT_ERROR, _T("SekRunEnd called when no CPU open\n"));
 #endif
 
-	nSekCyclesTotal += (nSekCyclesToDo - nSekCyclesDone) - SekC68KCurrentContext->ICount;
-	nSekCyclesDone += (nSekCyclesToDo - nSekCyclesDone) - SekC68KCurrentContext->ICount;
-	nSekCyclesSegment = nSekCyclesDone;
-	nSekCyclesToDo = SekC68KCurrentContext->ICount = -1;
+	SekC68KCurrentContext->end_run = 1;
 }
 
 // Run the active CPU
@@ -1279,7 +1275,7 @@ INT32 SekRun(const INT32 nCycles)
 		nSekCyclesSegment = C68k_Exec(SekC68KCurrentContext, nCycles);
 	}
 	nSekCyclesTotal += nSekCyclesSegment;
-	nSekCyclesToDo = SekC68KCurrentContext->ICount = -1;
+	nSekCyclesToDo = SekC68KCurrentContext->ICount = 0;
 
 	return nSekCyclesSegment;
 }

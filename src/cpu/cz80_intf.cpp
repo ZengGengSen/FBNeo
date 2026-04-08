@@ -33,14 +33,13 @@ static void Z80Exit();
 static void Z80Reset();
 static INT32 Z80Execute(INT32 nCycles);
 static INT32 Z80Nmi();
+static void RebasePC(UINT16 address);
 
 struct ZetExt {
-	struct {
-		Reg16 bc;
-		Reg16 de;
-		Reg16 hl;
-		Reg16 af;
-	};
+	Reg16 bc;
+	Reg16 de;
+	Reg16 hl;
+	Reg16 af;
 
 	Reg16 ix;
 	Reg16 iy;
@@ -459,6 +458,35 @@ void ZetReset()
 	Z80Reset();
 }
 
+void ZetReset(INT32 nCPU)
+{
+#if defined FBNEO_DEBUG
+	if (!DebugCPU_ZetInitted) bprintf(PRINT_ERROR, _T("ZetReset called without init\n"));
+#endif
+
+	ZetCPUPush(nCPU);
+
+	ZetReset();
+
+	ZetCPUPop();
+}
+
+INT32 ZetDe(INT32 n)
+{
+#if defined FBNEO_DEBUG
+	if (!DebugCPU_ZetInitted) bprintf(PRINT_ERROR, _T("ZetDe called without init\n"));
+	if (nOpenedCPU == -1 && n < 0) bprintf(PRINT_ERROR, _T("ZetDe called when no CPU open\n"));
+#endif
+
+	if (n >= 0) {
+		return ZetCPUContext[n]->de.w;
+	} else if (nOpenedCPU != -1) {
+		return ZetCPUContext[nOpenedCPU]->de.w;
+	} else {
+		return 0;
+	}
+}
+
 INT32 ZetScan(INT32 nAction)
 {
 #if defined FBNEO_DEBUG
@@ -475,10 +503,11 @@ INT32 ZetScan(INT32 nAction)
 		uintptr_t nRealPC;
 		szText[5] = '1' + i;
 
-		ScanVar(&ZetCPUContext[i], STRUCT_SIZE_HELPER(ZetExt, nInterruptLatch), szText);
+		ScanVar(ZetCPUContext[i], STRUCT_SIZE_HELPER(ZetExt, nInterruptLatch), szText);
 
 		nRealPC = ZetCPUContext[i]->pc - ZetCPUContext[i]->base_pc;
-		ZetCPUContext[i]->base_pc = (uintptr_t)ZetCPUContext[i]->pZetMemMap[0x200 | (nRealPC >> 8)] - (nRealPC & ~0xff);
+		ZetCPUContext[i]->base_pc = (uintptr_t)ZetCPUContext[i]->pZetMemMap[0x300 | nRealPC >> 8];
+		ZetCPUContext[i]->base_pc -= nRealPC & ~0xff;
 		ZetCPUContext[i]->pc = nRealPC + ZetCPUContext[i]->base_pc;
 	}
 
@@ -492,19 +521,26 @@ void ZetSetIRQLine(const INT32 line, const INT32 status)
 	if (nOpenedCPU == -1) bprintf(PRINT_ERROR, _T("ZetSetIRQLine called when no CPU open\n"));
 #endif
 
+	ZetCPUContext[nOpenedCPU]->nInterruptLatch &= 0x0fff;
 	switch ( status ) {
 		case CPU_IRQSTATUS_NONE:
-			ZetCPUContext[nOpenedCPU]->nInterruptLatch = 0x8000 | line;
+			ZetCPUContext[nOpenedCPU]->nInterruptLatch |= 0x8000;
 			break;
 		case CPU_IRQSTATUS_ACK:
-			ZetCPUContext[nOpenedCPU]->nInterruptLatch = 0x1000 | line;
+			ZetCPUContext[nOpenedCPU]->nInterruptLatch |= 0x1000;
 			break;
 		case CPU_IRQSTATUS_AUTO:
-			ZetCPUContext[nOpenedCPU]->nInterruptLatch = 0x2000 | line;
+			ZetCPUContext[nOpenedCPU]->nInterruptLatch |= 0x2000;
 			break;
 		case CPU_IRQSTATUS_HOLD:
-			ZetCPUContext[nOpenedCPU]->nInterruptLatch = 0x4000 | line;
+			ZetCPUContext[nOpenedCPU]->nInterruptLatch |= 0x4000;
 			break;
+	}
+
+	// set nmi state
+	if (line == 0x20) {
+		ZetCPUContext[nOpenedCPU]->nInterruptLatch &= 0xf000;
+		ZetCPUContext[nOpenedCPU]->nInterruptLatch |= line;
 	}
 }
 
@@ -518,6 +554,28 @@ void ZetSetIRQLine(INT32 nCPU, const INT32 line, const INT32 status)
 
 	ZetSetIRQLine(line, status);
 
+	ZetCPUPop();
+}
+
+void ZetSetVector(INT32 vector)
+{
+#if defined FBNEO_DEBUG
+	if (!DebugCPU_ZetInitted) bprintf(PRINT_ERROR, _T("ZetSetVector called without init\n"));
+	if (nOpenedCPU == -1) bprintf(PRINT_ERROR, _T("ZetSetVector called when no CPU open\n"));
+#endif
+
+	ZetCPUContext[nOpenedCPU]->nInterruptLatch &= 0xf000;
+	ZetCPUContext[nOpenedCPU]->nInterruptLatch |= (vector & 0xff);
+}
+
+void ZetSetVector(INT32 nCPU, INT32 vector)
+{
+#if defined FBNEO_DEBUG
+	if (!DebugCPU_ZetInitted) bprintf(PRINT_ERROR, _T("ZetSetVector called without init\n"));
+#endif
+
+	ZetCPUPush(nCPU);
+	ZetSetVector(vector);
 	ZetCPUPop();
 }
 
@@ -555,6 +613,21 @@ INT32 ZetTotalCycles()
 	return nZetCyclesTotal + ZetCPUContext[nOpenedCPU]->nCyclesSegment - ZetCPUContext[nOpenedCPU]->nCyclesLeft;
 }
 
+INT32 ZetTotalCycles(INT32 nCPU)
+{
+#if defined FBNEO_DEBUG
+	if (!DebugCPU_ZetInitted) bprintf(PRINT_ERROR, _T("ZetTotalCycles called without init\n"));
+#endif
+
+	ZetCPUPush(nCPU);
+
+	INT32 nRet = ZetTotalCycles();
+
+	ZetCPUPop();
+
+	return nRet;
+}
+
 void ZetSetHALT(INT32 nStatus)
 {
 #if defined FBNEO_DEBUG
@@ -566,6 +639,22 @@ void ZetSetHALT(INT32 nStatus)
 
 	ZetCPUContext[nOpenedCPU]->BusReq = nStatus;
 	if (nStatus) ZetRunEnd(); // end current timeslice since we're halted
+}
+
+void ZetSetRESETLine(INT32 nStatus)
+{
+#if defined FBNEO_DEBUG
+	if (!DebugCPU_ZetInitted) bprintf(PRINT_ERROR, _T("ZetSetRESETLine called without init\n"));
+	if (nOpenedCPU == -1) bprintf(PRINT_ERROR, _T("ZetSetRESETLine called when no CPU open\n"));
+#endif
+
+	if (nOpenedCPU < 0) return;
+
+	if (ZetCPUContext[nOpenedCPU]->ResetLine && nStatus == 0) {
+		ZetReset();
+	}
+
+	ZetCPUContext[nOpenedCPU]->ResetLine = nStatus;
 }
 
 #include "cz80/cz80.cpp"

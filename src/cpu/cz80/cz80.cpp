@@ -162,14 +162,12 @@ static UINT8 *SZHVC_sub = 0;
 }
 
 #define PUSH_16(A) {														\
+	zSP -= 2;																\
 	UINT8 *ptr = Z80->pZetMemMap[0x100 | (zSP) >> 8];						\
 	if (ptr) {																\
 		ptr -= (zSP & ~0xff);												\
-		zSP -= 2;															\
 		ptr[zSP] = A;														\
 		ptr[(zSP)+1] = (A) >> 8;											\
-	} else {																\
-		zSP -= 2;															\
 	}																		\
 }
 
@@ -811,8 +809,8 @@ Cz80_Exec:
 		Reg16 *data = pzHL;
 		Opcode = READ_OP();
 
-		// printf("op:%02x, PC:%04x, A:%02x, F:%02x, BC:%04x, DE:%04x, HL:%04x, ICount: %d, irq_vector: %02x\n",
-		// 	Opcode, PC - zBasePC, zA, zF, zBC, zDE, zHL, Z80->nCyclesLeft,
+		// printf("op:%02x, PC:%04x, A:%02x, F:%02x, BC:%04x, DE:%04x, HL:%04x, SP: %04x, ICount: %d, irq_vector: %02x\n",
+		// 	Opcode, PC - zBasePC, zA, zF, zBC, zDE, zHL, zSP, Z80->nCyclesLeft,
 		// 	Z80->nInterruptLatch & 0xff
 		// );
 
@@ -1809,7 +1807,10 @@ Cz80_Exec:
 #if Z80_EMULATE_R_EXACTLY
 			zR++;
 #endif
-//			printf("cb:%02x, PC:%04x, A:%02x, F:%02x, BC:%04x, DE:%04x, HL:%04x, ICount: %d\n", Opcode, PC - zBasePC, zA, zF, zBC, zDE, zHL, Z80->nCyclesLeft);
+			// printf("cb:%02x, PC:%04x, A:%02x, F:%02x, BC:%04x, DE:%04x, HL:%04x, SP: %04x, ICount: %d, irq_vector: %02x\n",
+			// 	Opcode, PC - zBasePC, zA, zF, zBC, zDE, zHL, zSP, Z80->nCyclesLeft,
+			// 	Z80->nInterruptLatch & 0xff
+			// );
 			goto *JumpTableCB[Opcode];
 
 			OPCB(0x00): // RLC  B
@@ -2225,7 +2226,10 @@ Cz80_Exec:
 #if Z80_EMULATE_R_EXACTLY
 			zR++;
 #endif
-//			printf("ed:%02x, PC:%04x, A:%02x, F:%02x, BC:%04x, DE:%04x, HL:%04x, ICount: %d\n", Opcode, PC - zBasePC, zA, zF, zBC, zDE, zHL, Z80->nCyclesLeft);
+			// printf("ed:%02x, PC:%04x, A:%02x, F:%02x, BC:%04x, DE:%04x, HL:%04x, SP: %04x, ICount: %d, irq_vector: %02x\n",
+			// 	Opcode, PC - zBasePC, zA, zF, zBC, zDE, zHL, zSP, Z80->nCyclesLeft,
+			// 	Z80->nInterruptLatch & 0xff
+			// );
 
 			USE_CYCLES(4)
 			goto *JumpTableED[Opcode];
@@ -2247,7 +2251,10 @@ Cz80_Exec:
 #if Z80_EMULATE_R_EXACTLY
 			zR++;
 #endif
-//			printf("xy:%02x, PC:%04x, A:%02x, F:%02x, BC:%04x, DE:%04x, HL:%04x, ICount: %d\n", Opcode, PC - zBasePC, zA, zF, zBC, zDE, zHL, Z80->nCyclesLeft);
+			// printf("xy:%02x, PC:%04x, A:%02x, F:%02x, BC:%04x, DE:%04x, HL:%04x, SP: %04x, ICount: %d, irq_vector: %02x\n",
+			// 	Opcode, PC - zBasePC, zA, zF, zBC, zDE, zHL, zSP, Z80->nCyclesLeft,
+			// 	Z80->nInterruptLatch & 0xff
+			// );
 
 			USE_CYCLES(4)
 			goto *JumpTableXY[Opcode];
@@ -2886,7 +2893,11 @@ Cz80_Exec:
 #if Z80_EMULATE_R_EXACTLY
 				zR++;
 #endif
-//				printf("xycb:%02x, PC:%04x, A:%02x, F:%02x, BC:%04x, DE:%04x, HL:%04x, \n", Opcode, PC - zBasePC, zA, zF, zBC, zDE, zHL);
+				// printf("xycb:%02x, PC:%04x, A:%02x, F:%02x, BC:%04x, DE:%04x, HL:%04x, SP: %04x, ICount: %d, irq_vector: %02x\n",
+				// 	Opcode, PC - zBasePC, zA, zF, zBC, zDE, zHL, zSP, Z80->nCyclesLeft,
+				// 	Z80->nInterruptLatch & 0xff
+				// );
+
 				goto *JumpTableXYCB[Opcode];
 
 				OPXYCB(0x00):   // RLC  (Ix+d), B
@@ -3327,8 +3338,8 @@ Cz80_Try_Int:
 		   2) Requests made with CPU_IRQSTATUS_ACK might cause more than 1 irq to
 		   get taken if is held in the _ACK state for too long(!) - dink jan.2016
 		*/
-		if (Z80->nInterruptLatch & Z80_IRQSTATUS_HOLD) {
-			Z80->nInterruptLatch &= ~Z80_IRQSTATUS_HOLD;
+		if (Z80->nInterruptLatch & Z80_IRQSTATUS_HOLD || Z80->nInterruptLatch & Z80_IRQSTATUS_AUTO) {
+			Z80->nInterruptLatch &= 0x0fff;
 			Z80->nInterruptLatch |= Z80_IRQSTATUS_NONE;
 		}
 
@@ -3339,17 +3350,14 @@ Cz80_Try_Int:
 			READ_MEM16( nTabAddr, nIntAddr );
 			PUSH_16(zRealPC);
 			SET_PC(nIntAddr);
-			if (Z80->nInterruptLatch & Z80_IRQSTATUS_AUTO) Z80->nInterruptLatch = Z80_IRQSTATUS_NONE;
 			Z80->nCyclesLeft -= 19;
 		} else if (zIM == 1) {
 			PUSH_16(zRealPC);
 			SET_PC( 0x38 );
-			if (Z80->nInterruptLatch & Z80_IRQSTATUS_AUTO) Z80->nInterruptLatch = Z80_IRQSTATUS_NONE;
 			Z80->nCyclesLeft -= 13;
 		} else {
 			PUSH_16( zRealPC );
 			SET_PC( Z80->nInterruptLatch & 0x38 );
-			if (Z80->nInterruptLatch & Z80_IRQSTATUS_AUTO) Z80->nInterruptLatch = Z80_IRQSTATUS_NONE;
 			Z80->nCyclesLeft -= 13;
 		}
 	}

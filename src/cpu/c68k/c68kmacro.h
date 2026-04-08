@@ -25,6 +25,10 @@
 #define FLAG_S					CPU->flag_S
 #define FLAG_I					CPU->flag_I
 
+/* Different ways to stop the CPU */
+#define STOP_LEVEL_STOP 1
+#define STOP_LEVEL_HALT 2
+
 #define OP(name)				op_##name:
 
 #define MAKE_INT_8(A)			(INT32)(INT8)(A)
@@ -130,10 +134,12 @@
 	USE_CYCLES(A)															\
 	goto C68k_Check_Interrupt;
 
-#define RET_HALT()															\
-	CPU->HaltState = 1;														\
+#define RET_STOP()															\
+	CPU->stopped |= STOP_LEVEL_STOP;										\
+	CHECK_INT																\
 	RELEASE_CYCLES();														\
-	goto C68k_Check_Interrupt;
+	USE_CYCLES(4)															\
+	goto C68k_Exec_Next;
 
 #define GET_PC()				(PC - CPU->BasePC)
 
@@ -203,6 +209,7 @@
 	adr = CPU->IRQLine;														\
 	if ((adr == 7) || (adr > CPU->flag_I))									\
 	{																		\
+		CPU->stopped &= ~STOP_LEVEL_STOP;									\
 		if (CPU->IRQState == HOLD_LINE)										\
 			CPU->IRQState = CLEAR_LINE;										\
 		CPU->IRQLine = 0;													\
@@ -856,7 +863,7 @@
 #define MOVE_CLOCKS_AI_32	12
 #define MOVE_CLOCKS_PI_32	12
 #define MOVE_CLOCKS_PD_32	12
-#define MOVE_CLOCKS_DI_32	18
+#define MOVE_CLOCKS_DI_32	16
 #define MOVE_CLOCKS_IX_32	18
 #define MOVE_CLOCKS_AW_32	16
 #define MOVE_CLOCKS_AL_32	20
@@ -925,7 +932,7 @@
 	FLAG_N = NFLAG_CLEAR;													\
 	FLAG_Z = ZFLAG_SET;														\
 	EA_WRITE_##mode(size, Y, 0)												\
-	RET(CLR_CLOCKS_M_##size + EA_CLOCKS_##mode##_##size)					\
+	RET(CLR_CLOCKS_##clk##_##size + EA_CLOCKS_##mode##_##size)					\
 }
 
 /*-----------------------------------------------------------------------------
@@ -1386,6 +1393,10 @@
 #define ADDQ_CLOCKS_M_16	8
 #define ADDQ_CLOCKS_M_32	12
 
+#define ADDQ_CLOCKS_A_8		4
+#define ADDQ_CLOCKS_A_16	4
+#define ADDQ_CLOCKS_A_32	8
+
 #define ADDQ(size, clk, mode)												\
 {																			\
 	src = GET_QUICK();														\
@@ -1399,7 +1410,7 @@
 {																			\
 	src = GET_QUICK();														\
 	AY += src;																\
-	RET(8)																	\
+	RET(ADDQ_CLOCKS_A_##size)												\
 }
 
 /*-----------------------------------------------------------------------------
@@ -1879,7 +1890,7 @@
 	res = res * src;														\
 	FLAGS(32)																\
 	EA_WRITE_RESULT(32, D, X)												\
-	RET(50 + EA_CLOCKS_##mode##_16)											\
+	RET(54 + EA_CLOCKS_##mode##_16)											\
 }
 
 /*-----------------------------------------------------------------------------
@@ -1893,7 +1904,7 @@
 	res = (INT32)res * (INT32)src;											\
 	FLAGS(32)																\
 	EA_WRITE_RESULT(32, D, X)												\
-	RET(50 + EA_CLOCKS_##mode##_16)											\
+	RET(54 + EA_CLOCKS_##mode##_16)											\
 }
 
 /*-----------------------------------------------------------------------------
