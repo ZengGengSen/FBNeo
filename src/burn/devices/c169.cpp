@@ -83,33 +83,27 @@ static void c169_roz_draw_helper()
 	UINT16 *srcbitmap = roz_bitmap;
 	UINT32 hstartx = startx + clip_min_x * incxx + clip_min_y * incyx;
 	UINT32 hstarty = starty + clip_min_x * incxy + clip_min_y * incyy;
-	INT32 sx = clip_min_x;
-	INT32 sy = clip_min_y;
-	while (sy <= clip_max_y)
+	const INT32 width = clip_max_x - clip_min_x + 1;
+	for (INT32 sy = clip_min_y; sy <= clip_max_y; sy++)
 	{
-		INT32 x = sx;
 		UINT32 cx = hstartx;
 		UINT32 cy = hstarty;
-		UINT16 *dest = pTransDraw + (sy * nScreenWidth) + sx;
-		UINT8 *prio = pPrioDraw + (sy * nScreenWidth) + sx;
-		while (x <= clip_max_x)
+		UINT16 *dest = pTransDraw + sy * nScreenWidth + clip_min_x;
+		UINT8 *prio  = pPrioDraw  + sy * nScreenWidth + clip_min_x;
+		for (INT32 x = 0; x < width; x++)
 		{
 			UINT32 xpos = (((cx >> 16) & size_mask) + left) & 0xfff;
-			UINT32 ypos = (((cy >> 16) & size_mask) + top) & 0xfff;
-			INT32 pxl = BURN_ENDIAN_SWAP_INT16(srcbitmap[(ypos * 0x1000) + xpos]);
-			if ((pxl & 0x8000) == 0) {
-				*dest = pxl + color;
-				*prio = global_priority;
+			UINT32 ypos = (((cy >> 16) & size_mask) + top)  & 0xfff;
+			UINT16 pxl = srcbitmap[(ypos << 12) + xpos];
+			if (!(pxl & 0x8000)) {
+				dest[x] = pxl + color;
+				prio[x] = global_priority;
 			}
 			cx += incxx;
 			cy += incxy;
-			x++;
-			dest++;
-			prio++;
 		}
 		hstartx += incyx;
 		hstarty += incyy;
-		sy++;
 	}
 }
 

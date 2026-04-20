@@ -2402,6 +2402,7 @@ static void draw_layer_with_masking_by_line(INT32 layer, INT32 color, INT32 line
 	color = ((color & 7) * 256) + 0x1000;
 
 	INT32 sy = (scrolly + line) % sizey_full;
+	const UINT8 pri_val = (priority & 0x1000) ? ((priority * 2) & 0xff) : (priority & 0xff);
 
 	UINT16 *dst = pTransDraw + (line * nScreenWidth);
 	UINT8 *pri = pPrioDraw + (line * nScreenWidth);
@@ -2410,25 +2411,33 @@ static void draw_layer_with_masking_by_line(INT32 layer, INT32 color, INT32 line
 	{
 		INT32 sx = (scrollx + x) % sizex_full;
 
-		INT32 offs = (sx / 8) + ((sy / 8) * sizex);
+		INT32 offs_tile = (sx / 8) + ((sy / 8) * sizex);
 
-		INT32 code = BURN_ENDIAN_SWAP_INT16(ram[offs]);
+		INT32 code = BURN_ENDIAN_SWAP_INT16(ram[offs_tile]);
 		UINT8 *gfx = DrvGfxROM2 + (code * 8 * 8);
-		UINT8 *msk = DrvGfxROM4 + (code * 8);
+		const UINT8 row_mask = DrvGfxROM4[code * 8 + (sy & 7)];
+		if (!row_mask) continue;  // fully transparent row
 
 		gfx += (sy & 7) * 8;
-		msk += (sy & 7);
 
-		INT32 zx = x - (sx & 7);
+		INT32 zx0 = x - (sx & 7);
+		INT32 xx_start = (zx0 < min_x) ? (min_x - zx0) : 0;
+		INT32 xx_end   = (zx0 + 8 > max_x + 1) ? (max_x + 1 - zx0) : 8;
 
-		for (INT32 xx = 0; xx < 8; xx++, zx++)
-		{
-			if (zx < min_x || zx > max_x) continue;
-	
-			if (*msk & (0x80 >> xx))
+		if (row_mask == 0xFF) {
+			for (INT32 xx = xx_start; xx < xx_end; xx++)
 			{
-				dst[zx] = gfx[xx] + color;
-				pri[zx] = (priority & 0x1000) ? ((priority * 2) & 0xff) : (priority & 0xff);
+				dst[zx0 + xx] = gfx[xx] + color;
+				pri[zx0 + xx] = pri_val;
+			}
+		} else {
+			for (INT32 xx = xx_start; xx < xx_end; xx++)
+			{
+				if (row_mask & (0x80 >> xx))
+				{
+					dst[zx0 + xx] = gfx[xx] + color;
+					pri[zx0 + xx] = pri_val;
+				}
 			}
 		}
 	}
@@ -2473,6 +2482,7 @@ static void draw_layer_with_masking(INT32 layer, INT32 color, INT32 priority)
 	}
 
 	color = ((color & 7) * 256) + 0x1000;
+	const UINT8 pri_val = (priority & 0x1000) ? ((priority * 2) & 0xff) : (priority & 0xff);
 
 	for (INT32 offs = 0; offs < sizex * sizey; offs++)
 	{
@@ -2500,36 +2510,66 @@ static void draw_layer_with_masking(INT32 layer, INT32 color, INT32 priority)
 			gfx += 8 * 7;
 			msk += 7;
 
-			for (INT32 y = 0; y < 8; y++, msk--, gfx-=8)
+			INT32 y_start = (sy < min_y) ? (min_y - sy) : 0;
+			INT32 y_end   = (sy + 8 > max_y + 1) ? (max_y + 1 - sy) : 8;
+			INT32 x_start = (sx < min_x) ? (min_x - sx) : 0;
+			INT32 x_end   = (sx + 8 > max_x + 1) ? (max_x + 1 - sx) : 8;
+			if (y_start >= y_end || x_start >= x_end) continue;
+
+			msk -= y_start;
+			gfx -= y_start * 8;
+			for (INT32 y = y_start; y < y_end; y++, msk--, gfx -= 8)
 			{
-				if ((sy+y) < min_y) continue;
-				if ((sy+y) > max_y) break;
-
-				for (INT32 x = 0; x < 8; x++)
-				{
-					if ((sx + x) < min_x || (sx + x) > max_x) continue;
-
-					if (*msk & (0x01 << x))
+				const UINT8 row_mask = *msk;
+				if (!row_mask) continue;
+				UINT16 *rowptr = pTransDraw + (sy + y) * nScreenWidth + sx;
+				UINT8 *prirow  = pPrioDraw  + (sy + y) * nScreenWidth + sx;
+				if (row_mask == 0xFF) {
+					for (INT32 x = x_start; x < x_end; x++)
 					{
-						pTransDraw[(sy + y) * nScreenWidth + (sx + x)] = gfx[7 - x] + color;
-						pPrioDraw[(sy + y) * nScreenWidth + (sx + x)] = (priority & 0x1000) ? ((priority * 2) & 0xff) : (priority & 0xff);
+						rowptr[x] = gfx[7 - x] + color;
+						prirow[x] = pri_val;
+					}
+				} else {
+					for (INT32 x = x_start; x < x_end; x++)
+					{
+						if (row_mask & (0x01 << x))
+						{
+							rowptr[x] = gfx[7 - x] + color;
+							prirow[x] = pri_val;
+						}
 					}
 				}
 			}
 		} else {
-			for (INT32 y = 0; y < 8; y++, msk++, gfx+=8)
+			INT32 y_start = (sy < min_y) ? (min_y - sy) : 0;
+			INT32 y_end   = (sy + 8 > max_y + 1) ? (max_y + 1 - sy) : 8;
+			INT32 x_start = (sx < min_x) ? (min_x - sx) : 0;
+			INT32 x_end   = (sx + 8 > max_x + 1) ? (max_x + 1 - sx) : 8;
+			if (y_start >= y_end || x_start >= x_end) continue;
+
+			msk += y_start;
+			gfx += y_start * 8;
+			for (INT32 y = y_start; y < y_end; y++, msk++, gfx += 8)
 			{
-				if ((sy+y) < min_y) continue;
-				if ((sy+y) > max_y) break;
-
-				for (INT32 x = 0; x < 8; x++)
-				{
-					if ((sx + x) < min_x || (sx + x) > max_x) continue;
-
-					if (*msk & (0x80 >> x))
+				const UINT8 row_mask = *msk;
+				if (!row_mask) continue;
+				UINT16 *rowptr = pTransDraw + (sy + y) * nScreenWidth + sx;
+				UINT8 *prirow  = pPrioDraw  + (sy + y) * nScreenWidth + sx;
+				if (row_mask == 0xFF) {
+					for (INT32 x = x_start; x < x_end; x++)
 					{
-						pTransDraw[(sy + y) * nScreenWidth + (sx + x)] = gfx[x] + color;
-						pPrioDraw[(sy + y) * nScreenWidth + (sx + x)] = (priority & 0x1000) ? ((priority * 2) & 0xff) : (priority & 0xff);
+						rowptr[x] = gfx[x] + color;
+						prirow[x] = pri_val;
+					}
+				} else {
+					for (INT32 x = x_start; x < x_end; x++)
+					{
+						if (row_mask & (0x80 >> x))
+						{
+							rowptr[x] = gfx[x] + color;
+							prirow[x] = pri_val;
+						}
 					}
 				}
 			}
@@ -2663,22 +2703,69 @@ static void zdrawgfxzoom(UINT8 *gfx, INT32 tile_size, UINT32 code, UINT32 color,
 		{
 			INT32 y;
 			UINT8 *priority_bitmap = pPrioDraw;
+			const INT32 width = ex - sx;
 
-			for( y=sy; y<ey; y++ )
+			if (color != 0xf00)
 			{
-				const UINT8 *source = source_base + (y_index>>16) * tile_size;
-				UINT16 *dest = pTransDraw + y * nScreenWidth;
-				UINT8 *pri = priority_bitmap + y * nScreenWidth;
-				INT32 x, x_index = x_index_base;
-
-				for (x = sx; x < ex; x++)
+				if (dx == 0x10000)
 				{
-					INT32 c = source[x_index>>16];
-					if (c != 0xff)
+					// 1:1 horizontal scale fast path: sequential source access, no x_index tracking
+					const INT32 src_col = x_index_base >> 16;
+					for (y = sy; y < ey; y++)
 					{
-						if (pri[x] <= (priority))
+						const UINT8 *source = source_base + (y_index>>16) * tile_size + src_col;
+						UINT16 *dest = pTransDraw + y * nScreenWidth + sx;
+						UINT8 *pri = priority_bitmap + y * nScreenWidth + sx;
+						for (INT32 xpix = 0; xpix < width; xpix++)
 						{
-							if (color == 0xf00 && c==0xfe)
+							INT32 c = source[xpix];
+							if (c != 0xff && pri[xpix] <= priority)
+							{
+								dest[xpix] = c | color;
+								pri[xpix] = priority;
+							}
+						}
+						y_index += dy;
+					}
+				}
+				else
+				{
+					// General zoom path: no shadow pen check in the inner loop
+					for (y = sy; y < ey; y++)
+					{
+						const UINT8 *source = source_base + (y_index>>16) * tile_size;
+						UINT16 *dest = pTransDraw + y * nScreenWidth + sx;
+						UINT8 *pri = priority_bitmap + y * nScreenWidth + sx;
+						INT32 x_index = x_index_base;
+						for (INT32 xpix = 0; xpix < width; xpix++)
+						{
+							INT32 c = source[x_index>>16];
+							if (c != 0xff && pri[xpix] <= priority)
+							{
+								dest[xpix] = c | color;
+								pri[xpix] = priority;
+							}
+							x_index += dx;
+						}
+						y_index += dy;
+					}
+				}
+			}
+			else
+			{
+				// Shadow/special-color pen path (rare)
+				for (y = sy; y < ey; y++)
+				{
+					const UINT8 *source = source_base + (y_index>>16) * tile_size;
+					UINT16 *dest = pTransDraw + y * nScreenWidth;
+					UINT8 *pri = priority_bitmap + y * nScreenWidth;
+					INT32 x, x_index = x_index_base;
+					for (x = sx; x < ex; x++)
+					{
+						INT32 c = source[x_index>>16];
+						if (c != 0xff && pri[x] <= priority)
+						{
+							if (c == 0xfe)
 							{
 								if (dest[x] & 0x1000)
 									dest[x] |= 0x800;
@@ -2687,58 +2774,124 @@ static void zdrawgfxzoom(UINT8 *gfx, INT32 tile_size, UINT32 code, UINT32 color,
 							}
 							else
 							{
-								dest[x] = c | color;
+								dest[x] = c | 0xf00;
 							}
 							pri[x] = priority;
 						}
+						x_index += dx;
 					}
-					x_index += dx;
+					y_index += dy;
 				}
-				y_index += dy;
 			}
 		} else
 		{ // 2-priority mode. "priority" sprite:tile, "priority2" sprite:sprite
-			// Marvel Land needs this for things like the end-of-level door, which is a lower prio than the player sprite - but the player sprite needs to be ontop of the door.
+			// Marvel Land needs this for the end-of-level door (lower prio than player sprite).
 			INT32 y;
 			UINT8 *priority_bitmap = pPrioDraw;
 			UINT8 *priority_bitmap2 = SpritePrio;
+			const INT32 width = ex - sx;
 
-			for( y=sy; y<ey; y++ )
+			if (color != 0xf00)
 			{
-				const UINT8 *source = source_base + (y_index>>16) * tile_size;
-				UINT16 *dest = pTransDraw + y * nScreenWidth;
-				UINT8 *pri = priority_bitmap + y * nScreenWidth;
-				UINT8 *pri2 = priority_bitmap2 + y * nScreenWidth;
-				INT32 x, x_index = x_index_base;
-
-				for (x = sx; x < ex; x++)
+				if (dx == 0x10000)
 				{
-					INT32 c = source[x_index>>16];
-					if (c != 0xff)
+					// 1:1 horizontal scale fast path: sequential source access
+					const INT32 src_col = x_index_base >> 16;
+					for (y = sy; y < ey; y++)
 					{
-						if (pri[x] <= priority && pri2[x] <= priority2)
+						const UINT8 *source = source_base + (y_index>>16) * tile_size + src_col;
+						UINT16 *dest = pTransDraw + y * nScreenWidth + sx;
+						UINT8 *pri = priority_bitmap + y * nScreenWidth + sx;
+						UINT8 *pri2 = priority_bitmap2 + y * nScreenWidth + sx;
+						for (INT32 xpix = 0; xpix < width; xpix++)
 						{
-							if (color == 0xf00 && c==0xfe)
+							INT32 c = source[xpix];
+							if (c != 0xff)
 							{
-								if (dest[x] & 0x1000)
-									dest[x] |= 0x800;
-								else
-									dest[x] = 0x4000; // black pen
+								if (pri[xpix] <= priority && pri2[xpix] <= priority2)
+								{
+									dest[xpix] = c | color;
+									pri2[xpix] = priority2;
+								}
+								else if (!is_c355)
+								{
+									pri2[xpix] = 0xff;
+								}
 							}
-							else
-							{
-								dest[x] = c | color;
-							}
-
-							pri2[x] = priority2; // only write sprite:sprite prio bitmap
-						} else {
-							if (!is_c355)
-								pri2[x] = 0xff; // for masking effects in rthun2 (enemy rides down wall-chute)
 						}
+						y_index += dy;
 					}
-					x_index += dx;
 				}
-				y_index += dy;
+				else
+				{
+					// General zoom 2-priority path
+					for (y = sy; y < ey; y++)
+					{
+						const UINT8 *source = source_base + (y_index>>16) * tile_size;
+						UINT16 *dest = pTransDraw + y * nScreenWidth + sx;
+						UINT8 *pri = priority_bitmap + y * nScreenWidth + sx;
+						UINT8 *pri2 = priority_bitmap2 + y * nScreenWidth + sx;
+						INT32 x_index = x_index_base;
+						for (INT32 xpix = 0; xpix < width; xpix++)
+						{
+							INT32 c = source[x_index>>16];
+							if (c != 0xff)
+							{
+								if (pri[xpix] <= priority && pri2[xpix] <= priority2)
+								{
+									dest[xpix] = c | color;
+									pri2[xpix] = priority2; // only write sprite:sprite prio bitmap
+								}
+								else if (!is_c355)
+								{
+									pri2[xpix] = 0xff; // masking effects in rthun2
+								}
+							}
+							x_index += dx;
+						}
+						y_index += dy;
+					}
+				}
+			}
+			else
+			{
+				// Shadow/special-color pen in 2-priority mode (rare)
+				for (y = sy; y < ey; y++)
+				{
+					const UINT8 *source = source_base + (y_index>>16) * tile_size;
+					UINT16 *dest = pTransDraw + y * nScreenWidth;
+					UINT8 *pri = priority_bitmap + y * nScreenWidth;
+					UINT8 *pri2 = priority_bitmap2 + y * nScreenWidth;
+					INT32 x, x_index = x_index_base;
+					for (x = sx; x < ex; x++)
+					{
+						INT32 c = source[x_index>>16];
+						if (c != 0xff)
+						{
+							if (pri[x] <= priority && pri2[x] <= priority2)
+							{
+								if (c == 0xfe)
+								{
+									if (dest[x] & 0x1000)
+										dest[x] |= 0x800;
+									else
+										dest[x] = 0x4000; // black pen
+								}
+								else
+								{
+									dest[x] = c | 0xf00;
+								}
+								pri2[x] = priority2; // only write sprite:sprite prio bitmap
+							}
+							else if (!is_c355)
+							{
+								pri2[x] = 0xff; // masking effects in rthun2
+							}
+						}
+						x_index += dx;
+					}
+					y_index += dy;
+				}
 			}
 		}
 	}
@@ -2884,46 +3037,67 @@ static inline void draw_roz_helper_block(const struct roz_param *rozInfo, INT32 
 	UINT8 *prio = pPrioDraw + (desty * nScreenWidth) + destx;
 	INT32 dest_rowinc = nScreenWidth - width;
 
-	while (desty < desty_end)
+	if (rozInfo->wrap)
 	{
-		UINT16 *dest_end = dest + width;
-		while (dest < dest_end)
+		while (desty < desty_end)
 		{
-			UINT32 xpos = (srcx >> 16);
-			UINT32 ypos = (srcy >> 16);
-
-			if (rozInfo->wrap)
+			UINT16 *dest_end = dest + width;
+			while (dest < dest_end)
 			{
-				xpos &= size_mask;
-				ypos &= size_mask;
-			}
-			else if ((xpos > rozInfo->size) || (ypos >= rozInfo->size))
-			{
+				UINT32 xpos = (srcx >> 16) & size_mask;
+				UINT32 ypos = (srcy >> 16) & size_mask;
+				INT32 pxl = BURN_ENDIAN_SWAP_INT16(roz_bitmap[(ypos * 256 * 8) + xpos]);
+				if (pxl != 0xff)
+				{
+					*dest = pxl + rozInfo->color;
+					*prio = pri;
+				}
 				srcx += rozInfo->incxx;
 				srcy += rozInfo->incxy;
 				dest++;
 				prio++;
-				continue;
 			}
-
-			INT32 pxl = BURN_ENDIAN_SWAP_INT16(roz_bitmap[(ypos * 256 * 8) + xpos]);
-
-			if (pxl != 0xff)
-			{
-				*dest = pxl + rozInfo->color;
-				*prio = pri;
-			}
-
-			srcx += rozInfo->incxx;
-			srcy += rozInfo->incxy;
-			dest++;
-			prio++;
+			srcx += end_incrx;
+			srcy += end_incry;
+			dest += dest_rowinc;
+			prio += dest_rowinc;
+			desty++;
 		}
-		srcx += end_incrx;
-		srcy += end_incry;
-		dest += dest_rowinc;
-		prio += dest_rowinc;
-		desty++;
+	}
+	else
+	{
+		while (desty < desty_end)
+		{
+			UINT16 *dest_end = dest + width;
+			while (dest < dest_end)
+			{
+				UINT32 xpos = (srcx >> 16);
+				UINT32 ypos = (srcy >> 16);
+				if ((xpos > rozInfo->size) || (ypos >= rozInfo->size))
+				{
+					srcx += rozInfo->incxx;
+					srcy += rozInfo->incxy;
+					dest++;
+					prio++;
+					continue;
+				}
+				INT32 pxl = BURN_ENDIAN_SWAP_INT16(roz_bitmap[(ypos * 256 * 8) + xpos]);
+				if (pxl != 0xff)
+				{
+					*dest = pxl + rozInfo->color;
+					*prio = pri;
+				}
+				srcx += rozInfo->incxx;
+				srcy += rozInfo->incxy;
+				dest++;
+				prio++;
+			}
+			srcx += end_incrx;
+			srcy += end_incry;
+			dest += dest_rowinc;
+			prio += dest_rowinc;
+			desty++;
+		}
 	}
 }
 
@@ -3611,7 +3785,7 @@ static INT32 DrvFrame()
 
 	}
 
-	INT32 nInterleave = 261*2; // was 264, but too glitchy for dsaber
+	INT32 nInterleave = 261; // halved from 261*2 for fewer CPU context switches
 	INT32 nCyclesTotal[4] = { (INT32)((double)12288000 / 60.606061), (INT32)((double)12288000 / 60.606061), (INT32)((double)2048000 / 60.606061), (INT32)((double)2048000 / 1 / 60.606061) };
 	INT32 nCyclesDone[4] = { 0, 0, 0, 0 };
 	INT32 vbloffs = 8;
@@ -3631,13 +3805,13 @@ static INT32 DrvFrame()
 	}
 
 	for (INT32 i = 0; i < nInterleave; i++) {
-		scanline = i / 2;
+		scanline = i;
 
 		position = (((BURN_ENDIAN_SWAP_INT16(ctrl[0xa]) & 0xff) * 256 + (BURN_ENDIAN_SWAP_INT16(ctrl[0xb]) & 0xff)) - (35+(has_shift ? -4 : 0))) & 0xff;
 
 		SekOpen(0);
-		if (i == (240+vbloffs)*2) SekSetIRQLine(irq_vblank[0], CPU_IRQSTATUS_AUTO); // should ack in c148
-		if (i == position*2) SekSetIRQLine(irq_pos[0], CPU_IRQSTATUS_ACK);
+		if (i == (240+vbloffs)) SekSetIRQLine(irq_vblank[0], CPU_IRQSTATUS_AUTO); // should ack in c148
+		if (i == position) SekSetIRQLine(irq_pos[0], CPU_IRQSTATUS_ACK);
 		CPU_RUN(0, Sek);
 		SekClose();
 
@@ -3645,16 +3819,16 @@ static INT32 DrvFrame()
 		if (sub_cpu_in_reset) {
 			CPU_IDLE(1, Sek);
 		} else {
-			if (i == (240+vbloffs)*2) SekSetIRQLine(irq_vblank[1], CPU_IRQSTATUS_AUTO); // should ack in c148
-			if (i == position*2) SekSetIRQLine(irq_pos[1], CPU_IRQSTATUS_ACK);
+			if (i == (240+vbloffs)) SekSetIRQLine(irq_vblank[1], CPU_IRQSTATUS_AUTO); // should ack in c148
+			if (i == position) SekSetIRQLine(irq_pos[1], CPU_IRQSTATUS_ACK);
 			CPU_RUN(1, Sek);
 		}
 		SekClose();
 
-		if (pBurnDraw && pDrvDrawLine && i&1)
-			pDrvDrawLine(i/2);
+		if (pBurnDraw && pDrvDrawLine)
+			pDrvDrawLine(i);
 
-		if (i == ((223)*2) + 1) {
+		if (i == 223) {
 			if (pBurnDraw) {
 				BurnDrvRedraw();
 			}
@@ -3664,10 +3838,10 @@ static INT32 DrvFrame()
 			CPU_IDLE(3, m6805);
 		} else {
 			CPU_RUN(3, m6805);
-			if (i == 240*2) {
+			if (i == 240) {
 				hd63705SetIrqLine(0, CPU_IRQSTATUS_ACK);
 			}
-			if (i == 16*2) {
+			if (i == 16) {
 				hd63705SetIrqLine(0, CPU_IRQSTATUS_NONE);
 			}
 		}
@@ -3677,7 +3851,7 @@ static INT32 DrvFrame()
 		} else {
 			CPU_RUN_TIMER(2);
 
-			if (i == 1*2 || i == 133*2) {
+			if (i == 1 || i == 133) {
 				M6809SetIRQLine(0, CPU_IRQSTATUS_HOLD);
 				M6809SetIRQLine(1, CPU_IRQSTATUS_HOLD);
 			}
