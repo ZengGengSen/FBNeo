@@ -362,8 +362,10 @@ static void Z80Reset() {
 
 	Z80->nInterruptLatch = Z80_IRQSTATUS_NONE | 0xff;
 
-	// TODO: nmi state
-	// nmi_pending
+	Z80->nmi_pending = 0;
+	Z80->nmi_state = 0;
+
+	// TODO:
 	// after_ei
 	// ldair
 
@@ -3323,7 +3325,21 @@ Cz80_Exec:
 	}
 
 Cz80_Try_Int:
-	if ((Z80->nInterruptLatch & Z80_IRQSTATUS_NONE) == 0) {
+	if (Z80->nmi_pending) {
+		// Non-maskable interrupt: takes priority over maskable IRQs and is
+		// serviced regardless of IFF1.  IFF1 is copied into IFF2 (so RETN can
+		// restore it) and then cleared, then we vector to 0x66.
+		Z80->nmi_pending = 0;
+
+		if (GET_OP() == 0x76) PC++; // wake up from halt
+
+		zIFF2 = zIFF1;
+		zIFF1 = 0;
+		PUSH_16(zRealPC);
+		SET_PC(0x66);
+		Z80->nCyclesLeft -= 11;
+	}
+	else if ((Z80->nInterruptLatch & Z80_IRQSTATUS_NONE) == 0) {
 		if (zIFF1 == 0) goto Cz80_Exec_End;
 
 		if (GET_OP() == 0x76) PC++;

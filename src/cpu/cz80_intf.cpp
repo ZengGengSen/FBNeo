@@ -70,6 +70,10 @@ struct ZetExt {
 	INT32 nCyclesDone;
 
 	int nEI;
+
+	INT32 nmi_pending;			// edge-latched NMI request (survives until serviced)
+	INT32 nmi_state;			// current NMI line level, for rising-edge detection
+
 	int nInterruptLatch;
 
 	UINT8 *pR8[8];
@@ -521,6 +525,26 @@ void ZetSetIRQLine(const INT32 line, const INT32 status)
 	if (nOpenedCPU == -1) bprintf(PRINT_ERROR, _T("ZetSetIRQLine called when no CPU open\n"));
 #endif
 
+	// NMI (Z80_INPUT_LINE_NMI == 0x20) is non-maskable and edge-triggered, so
+	// it is handled separately from the maskable nInterruptLatch.  The line
+	// level is tracked in nmi_state; a rising edge latches nmi_pending, which
+	// survives the falling edge until Z80Execute dispatches it to the NMI
+	// vector (0x66).  NeoGeo delivers sound commands to the Z80 this way (it
+	// asserts then immediately deasserts the line).
+	if (line == 0x20) {
+		if (status == CPU_IRQSTATUS_NONE) {
+			// falling edge: lower the line, keep any latched request pending
+			ZetCPUContext[nOpenedCPU]->nmi_state = 0;
+		} else if (status == CPU_IRQSTATUS_ACK) {
+			// rising edge: latch a pending NMI only when the line was low
+			if (ZetCPUContext[nOpenedCPU]->nmi_state == 0) {
+				ZetCPUContext[nOpenedCPU]->nmi_pending = 1;
+			}
+			ZetCPUContext[nOpenedCPU]->nmi_state = 1;
+		}
+		return;
+	}
+
 	ZetCPUContext[nOpenedCPU]->nInterruptLatch &= 0x0fff;
 	switch ( status ) {
 		case CPU_IRQSTATUS_NONE:
@@ -535,12 +559,6 @@ void ZetSetIRQLine(const INT32 line, const INT32 status)
 		case CPU_IRQSTATUS_HOLD:
 			ZetCPUContext[nOpenedCPU]->nInterruptLatch |= 0x4000;
 			break;
-	}
-
-	// set nmi state
-	if (line == 0x20) {
-		ZetCPUContext[nOpenedCPU]->nInterruptLatch &= 0xf000;
-		ZetCPUContext[nOpenedCPU]->nInterruptLatch |= line;
 	}
 }
 
