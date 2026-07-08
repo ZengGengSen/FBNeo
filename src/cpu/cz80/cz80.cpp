@@ -797,6 +797,16 @@ static INT32 Z80Execute(INT32 nCycles) {
 
 	INT32 nTodo = 0;
 
+	// Re-anchor PC against the live memory map before executing.  zPC/zBasePC
+	// cache absolute host pointers, but the driver may have remapped the page
+	// under us while the CPU was stopped (e.g. NeoGeo banks its Z80 board BIOS
+	// in/out over 0x0000-0x7FFF between reset and the first run).  The logical
+	// address (zPC - zBasePC) is invariant, so recompute the host pointers from
+	// it against the current map - the same fixup ZetScan does on state load.
+	// Without this CZ80 keeps running the stale mapping (unlike the reference
+	// Z80 core, which reads the map on every fetch).
+	RebasePC((UINT16)(zPC - zBasePC));
+
 	PC = zPC;
 	PCDiff = PC_DIFF(zRealPC);
 
